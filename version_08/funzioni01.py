@@ -166,7 +166,7 @@ def final_state_vector(N_steps, time, initial_state= "110"):
     for _ in range(N_steps):
         qc.append(qc_gate,qr)
 
-    return qc#qi.Statevector.from_instruction(qc)
+    return qi.Statevector.from_instruction(qc)
 
 def CS_gate():
     qr=QuantumRegister(2)
