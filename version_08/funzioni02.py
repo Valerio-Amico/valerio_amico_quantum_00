@@ -127,9 +127,9 @@ def angolo(alpha, beta):
             return atan(beta/alpha)-np.pi
     if alpha==0:
         if beta>0:
-            return np.pi
+            return np.pi/2
         else:
-            return -np.pi
+            return -np.pi/2
 
     return 0
 
@@ -217,11 +217,57 @@ def semplyfied_gates(U, type, precision=20):
 
     if type == "esatto":
 
-        gate_1, gate_2 = simplyfied_gates_matricies(U, precision=precision)
+        ### considero la colonna relativa allo stato iniziale desiderato
+        ### in questo caso |110>  !!!!!DEVO IMPLEMENTARE QUESTA PARTE PER TUTTI GLI STATI!!!!!!!
 
-        a_1 = (angolo(gate_1[0])+angolo(gate_1[4*1+2]))/2
-        a_2 = angolo(gate_1[0])-a_1
-        a_3 = acos(sqrt(re(gate_1[1*4+1])**2+im(gate_1[1*4+1])**2))
+        b0=im(U[3*8+6])
+        b1=im(U[5*8+6])
+        alp0=re(U[3*8+6])
+        alp1=re(U[5*8+6])
+        alp2=re(U[6*8+6])
+
+        ### calcolo i coefficienti per i gate a 2 qubit
+
+        r1=acos(sqrt(alp2**2+b1**2))
+        a1=angolo(alp2,b1)
+        a2=0
+        phi1=np.pi+a2-angolo(alp1,b1)
+        r2=acos(sqrt(alp1**2+b1**2)/sin(r1))
+        phi2=-phi1-angolo(alp0,b0)
+
+        a_1_1 = -float(- a1 + phi1 - np.pi)/2
+        a_2_1 = float(a1 + phi1 - np.pi)/2
+        a_3_1 = float(r1)
+
+        a_1_2 = -float(- a2 + phi2 - np.pi)/2
+        a_2_2 = float(a2 + phi2 - np.pi)/2
+        a_3_2 = float(r2)
+
+        qr1=QuantumRegister(2)
+        qc1=QuantumCircuit(qr1)
+
+        qc1.rz(a_1_1*2,qr1[1])
+        qc1.h(qr1[0])
+        qc1.cx(qr1[0],qr1[1])
+        qc1.ry(-a_3_1,qr1[0])
+        qc1.ry(-a_3_1,qr1[1])
+        qc1.cx(qr1[0],qr1[1])
+        qc1.h(qr1[0])
+        qc1.rz(a_2_1*2,qr1[1])
+
+        qr=QuantumRegister(2)
+        qc=QuantumCircuit(qr)
+
+        qc.rz(a_1_2*2,qr[1])
+        qc.h(qr[0])
+        qc.cx(qr[0],qr[1])
+        qc.ry(-a_3_2,qr[0])
+        qc.ry(-a_3_2,qr[1])
+        qc.cx(qr[0],qr[1])
+        qc.h(qr[0])
+        qc.rz(a_2_2*2,qr[1])
+
+        return qc1, qc
 
 
 def column_evolution_tomo(steps, tempo, precision=20, initial_state='110', check=[0]):
@@ -234,7 +280,7 @@ def column_evolution_tomo(steps, tempo, precision=20, initial_state='110', check
 
     U = Trotter_N_approx(steps=steps, tempo=tempo, precision=precision)
 
-    gate_1, gate_2 = semplyfied_gates(U, type="transpile", precision=precision)
+    gate_1, gate_2 = semplyfied_gates(U, type="esatto", precision=precision)
 
     ### building the evolution cirquit
 
@@ -243,15 +289,17 @@ def column_evolution_tomo(steps, tempo, precision=20, initial_state='110', check
 
     ### preparing the initial state
 
-    l=0
-    for k in [5,3,1]:
-        if initial_state[l]=='1':
-            qc.x(qr[k])
-        l+=1
+    #l=0
+    #for k in [5,3,1]:
+    #    if initial_state[l]=='1':
+    #        qc.x(qr[k])
+    #    l+=1
+    qc.x(qr[3])
 
     ### appending the evolution
 
     qc.append(gate_1, [qr[1],qr[3]])
+    qc.x(qr[5])
     qc.append(gate_2, [qr[3],qr[5]])
 
     ### macking the tomography if there is no check
@@ -557,6 +605,48 @@ def calibration_cirquit(type="", N=0):
 
         return qc
     
+    if type=="column_evolution_remake":
+        qr=QuantumRegister(3)
+        qc=QuantumCircuit(qr)
+
+        qc.x([qr[0],qr[1]])
+        qc.sx(qr[0])
+        qc.barrier()
+        qc.sx(qr[0])
+        qc.x(qr[1])
+        qc.cx(qr[0],qr[1])
+        qc.x([qr[0],qr[1]])
+        qc.sx([qr[0],qr[1]])
+        qc.barrier()
+        qc.sx([qr[0],qr[1]])
+        
+        qc.cx(qr[0],qr[1])
+        qc.x([qr[0],qr[1]])
+        qc.sx(qr[0])
+        qc.barrier()
+        qc.sx(qr[0])
+        qc.x(qr[1])
+        qc.barrier()
+        qc.x([qr[1],qr[2]])
+        qc.sx(qr[1])
+        qc.barrier()
+        qc.sx(qr[1])
+        qc.x(qr[2])
+        qc.cx(qr[1],qr[2])
+        qc.x([qr[1],qr[2]])
+        qc.sx([qr[1],qr[2]])
+        qc.barrier()
+        qc.sx([qr[1],qr[2]])
+        
+        qc.cx(qr[1],qr[2])
+        qc.x([qr[1],qr[2]])
+        qc.sx(qr[1])
+        qc.barrier()
+        qc.sx(qr[1])
+        qc.x(qr[2])
+
+        return qc
+
     if type=="column_evolution":
         #circuito calibrazione per 4-cnot
         qr=QuantumRegister(3)
@@ -696,5 +786,5 @@ def matrix_from_cirquit(qc, phase=0):
     backend = Aer.get_backend('unitary_simulator')
     job = execute(qc, backend, shots=32000)
     result = job.result()
-    A=result.get_unitary(qc, decimals=7)*np.exp(1j*phase)
+    A=result.get_unitary(qc, decimals=10)*np.exp(1j*phase)
     return Matrix(A)
