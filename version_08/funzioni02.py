@@ -401,7 +401,7 @@ def evolution_tomo(type, N_steps, tempo, precision=20, initial_state='110', chec
     if type == "trotter_steps":
         if check != []:
             return "with type evolution = \"trotter_steps\" is not possible to add checks yet"
-        return f1.U_approx_tomo(steps=N_steps,trot_type="our",checks=[],initial_state=initial_state[::-1])
+        return f1.U_approx_tomo(steps=N_steps,trot_type="our",time=tempo,checks=[],initial_state=initial_state[::-1])
     return "errore"
     
 def mitigate(raw_results, Measure_Mitig="yes", ancillas_conditions=[], meas_fitter=0):

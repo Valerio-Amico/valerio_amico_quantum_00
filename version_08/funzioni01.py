@@ -274,10 +274,10 @@ def simmetry_check(type="simmetry1"):
 
         return DoubleCheckM_qc
 
-def U_approx_tomo(steps=10,trot_type="our",checks=[],initial_state='011'):
+def U_approx_tomo(steps=10,trot_type="our",checks=[],initial_state='011',time=np.pi):
 
     ############################################### making the trotter step
-    Trot_qc=Trotter_step(type=trot_type, N=steps)
+    Trot_qc=Trotter_step(type=trot_type, N=steps, time=time)
 
     ###################################################################
     N_bit=3
