@@ -379,10 +379,11 @@ def U_approx_tomo(steps=10,trot_type="our",checks=[],initial_state='011'):
         else:
             st_qcs = cirquits_tomography(ising, [qr[5],qr[3],qr[1]],[cr[0],cr[1],cr[2]])
 
-    if check_type[0]=="copy_check":
-        for ccc in st_qcs:
-            ccc.barrier()
-            ccc.measure([qr[0],qr[2],qr[4]],cr[3:6])
+    if len(sim_check)>0:
+        if check_type[0]=="copy_check":
+            for ccc in st_qcs:
+                ccc.barrier()
+                ccc.measure([qr[0],qr[2],qr[4]],cr[3:6])
     #################################### making the tomography with and without the ancillas    
     if len(sim_check)>0:
         st_qcs_na = U_approx_tomo(steps=steps,trot_type=trot_type,checks=[],initial_state=initial_state)

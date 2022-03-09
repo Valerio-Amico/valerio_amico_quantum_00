@@ -1,4 +1,6 @@
+from audioop import reverse
 from copy import deepcopy
+import funzioni01 as f1
 from sympy import *
 from sympy.physics.quantum import TensorProduct as Tp
 import qiskit.ignis.mitigation.measurement as mc
@@ -397,6 +399,10 @@ def evolution_tomo(type, N_steps, tempo, precision=20, initial_state='110', chec
         return column_evolution_tomo(steps=N_steps, tempo=tempo, precision=precision, initial_state=initial_state, check=check)
     if type == "complete_evolution":
         return complete_evolution_tomo(steps=N_steps, tempo=tempo, precision=precision, initial_state=initial_state, check=check)
+    if type == "trotter_steps":
+        if check != []:
+            return "with type evolution = \"trotter_steps\" is not possible to add checks yet"
+        return f1.U_approx_tomo(steps=N_steps,trot_type="our",checks=[],initial_state=initial_state[::-1])
     return "errore"
     
 def mitigate(raw_results, Measure_Mitig="yes", ancillas_conditions=[], meas_fitter=0):
@@ -432,21 +438,21 @@ def mitigate(raw_results, Measure_Mitig="yes", ancillas_conditions=[], meas_fitt
 
 
 
-
-        if N_ancillas>0:
-            for reg_key in old_counts:
-                reg_bits = reg_key.split(' ')
-                if reg_bits[0] in ancillas_conditions:
-                    if reg_bits[1] not in new_counts_nm:
-                        new_counts_nm[reg_bits[1]]=0
-                    new_counts_nm[reg_bits[1]]+=old_counts[reg_key]
-        else:
-            for reg_key in old_counts:
-                new_counts_nm[reg_key]=old_counts[reg_key]
+        if Measure_Mitig=="yes" and meas_fitter != 0:
+            if N_ancillas>0:
+                for reg_key in old_counts:
+                    reg_bits = reg_key.split(' ')
+                    if reg_bits[0] in ancillas_conditions:
+                        if reg_bits[1] not in new_counts_nm:
+                            new_counts_nm[reg_bits[1]]=0
+                        new_counts_nm[reg_bits[1]]+=old_counts[reg_key]
+            else:
+                for reg_key in old_counts:
+                    new_counts_nm[reg_key]=old_counts[reg_key]
 
         new_result_nm.results[i].data.counts = new_counts_nm
 
-        if Measure_Mitig=="yes":
+        if Measure_Mitig=="yes" and meas_fitter != 0:
             if N_ancillas>0:
                 for j in range(2**N_qubit):
                     if r_split[j] in old_counts.keys():
@@ -472,7 +478,7 @@ def mitigate(raw_results, Measure_Mitig="yes", ancillas_conditions=[], meas_fitt
         
             new_result.results[i].data.counts = new_counts
 
-    if Measure_Mitig=="yes":
+    if Measure_Mitig=="yes" and meas_fitter != 0:
         return new_result, new_result_nm
     else:
         return new_result_nm
