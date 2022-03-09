@@ -197,7 +197,7 @@ def Mdg_circquit():
     
     return Mdg_qc
 
-def semplyfied_gates(U, type, precision=20):
+def semplyfied_gates(U, type, precision):
 
     if type=="transpile":
         ### building gate_1 cirquit
@@ -272,11 +272,12 @@ def semplyfied_gates(U, type, precision=20):
         return qc1, qc
 
 
-def column_evolution_tomo(steps, tempo, precision=20, initial_state='110', check=[0]):
+def column_evolution_tomo(steps, tempo, precision, initial_state='110', check=[0]):
 
     ### check is a list:   check=["check_type", qubits_ancilla=[]]
     ### if check==[0] there is no check
-
+    if initial_state != "110": 
+        print("warning! the state is always initialide as 110. Change the function!")
 
     ### Hisemberg evolution with single column decomposition
 
@@ -369,7 +370,7 @@ def complete_evolution_tomo(steps, tempo, precision=20, initial_state='110', che
 
     ### macking the tomography if there is no check
 
-    if check==[0] or check==0:
+    if check==[0] or check==0 or check==[]:
         qcs=state_tomography_circuits(qc,[qr[1],qr[3],qr[5]])
         return qcs
 
