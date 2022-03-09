@@ -25,23 +25,23 @@ def Trotter_step(type="our", N=10, time = np.pi):
         Trot_qr=QuantumRegister(3)
         Trot_qc=QuantumCircuit(Trot_qr,name="Trotter_step")
 
-        Trot_qc.rz(pi/2,Trot_qr[1])
+        Trot_qc.rz(-pi/2,Trot_qr[1])
         Trot_qc.cx(Trot_qr[1],Trot_qr[0])
-        Trot_qc.ry(pi/2+2*time/N,Trot_qr[1])
-        Trot_qc.rz(-2*time/N-pi/2,Trot_qr[0])
+        Trot_qc.ry(-pi/2-2*time/N,Trot_qr[1])
+        Trot_qc.rz(2*time/N+pi/2,Trot_qr[0])
         Trot_qc.cx(Trot_qr[0],Trot_qr[1])
-        Trot_qc.ry(-2*time/N-pi/2,Trot_qr[1])
+        Trot_qc.ry(2*time/N+pi/2,Trot_qr[1])
         Trot_qc.cx(Trot_qr[1],Trot_qr[0])
-        Trot_qc.rz(-pi/2,Trot_qr[0])
+        Trot_qc.rz(pi/2,Trot_qr[0])
 
         Trot_qc.rz(-pi/2,Trot_qr[2])
         Trot_qc.cx(Trot_qr[2],Trot_qr[1])
-        Trot_qc.ry(pi/2+2*time/N,Trot_qr[2])
-        Trot_qc.rz(-2*time/N-pi/2,Trot_qr[1])
+        Trot_qc.ry(-pi/2-2*time/N,Trot_qr[2])
+        Trot_qc.rz(2*time/N+pi/2,Trot_qr[1])
         Trot_qc.cx(Trot_qr[1],Trot_qr[2])
-        Trot_qc.ry(-2*time/N-pi/2,Trot_qr[2])
+        Trot_qc.ry(2*time/N+pi/2,Trot_qr[2])
         Trot_qc.cx(Trot_qr[2],Trot_qr[1])
-        Trot_qc.rz(-pi/2,Trot_qr[1])
+        Trot_qc.rz(pi/2,Trot_qr[1])
 
         return Trot_qc
 
@@ -385,6 +385,7 @@ def U_approx_tomo(steps=10,trot_type="our",checks=[],initial_state='011'):
                 ccc.barrier()
                 ccc.measure([qr[0],qr[2],qr[4]],cr[3:6])
     #################################### making the tomography with and without the ancillas    
+    
     if len(sim_check)>0:
         st_qcs_na = U_approx_tomo(steps=steps,trot_type=trot_type,checks=[],initial_state=initial_state)
         return st_qcs, st_qcs_na

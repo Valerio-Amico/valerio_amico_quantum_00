@@ -306,12 +306,11 @@ def column_evolution_tomo(steps, tempo, precision=20, initial_state='110', check
 
     ### macking the tomography if there is no check
 
-    if check==[0] or check==0:
+    if check==[0] or check==0 or check == []:
         qcs=state_tomography_circuits(qc,[qr[1],qr[3],qr[5]])
         return qcs
 
     ### else append the check
-
     anc=check[1]
     N_anc=len(anc)
 
