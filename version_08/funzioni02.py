@@ -438,17 +438,17 @@ def mitigate(raw_results, Measure_Mitig="yes", ancillas_conditions=[], meas_fitt
 
 
 
-        if Measure_Mitig=="yes" and meas_fitter != 0:
-            if N_ancillas>0:
-                for reg_key in old_counts:
-                    reg_bits = reg_key.split(' ')
-                    if reg_bits[0] in ancillas_conditions:
-                        if reg_bits[1] not in new_counts_nm:
-                            new_counts_nm[reg_bits[1]]=0
-                        new_counts_nm[reg_bits[1]]+=old_counts[reg_key]
-            else:
-                for reg_key in old_counts:
-                    new_counts_nm[reg_key]=old_counts[reg_key]
+        #if Measure_Mitig=="yes" and meas_fitter != 0:
+        if N_ancillas>0:
+            for reg_key in old_counts:
+                reg_bits = reg_key.split(' ')
+                if reg_bits[0] in ancillas_conditions:
+                    if reg_bits[1] not in new_counts_nm:
+                        new_counts_nm[reg_bits[1]]=0
+                    new_counts_nm[reg_bits[1]]+=old_counts[reg_key]
+        else:
+            for reg_key in old_counts:
+                new_counts_nm[reg_key]=old_counts[reg_key]
 
         new_result_nm.results[i].data.counts = new_counts_nm
 
@@ -721,7 +721,7 @@ def calibration_cirquit(type="", N=0):
 
     return "error"
 
-def calibration_cirquits(type="", q_anc=[], N=0):
+def calibration_cirquits(type="", q_anc=[], N=0, check="no"):
     c_qc = calibration_cirquit(type=type, N=N)
 
     qubits = q_anc+[1,3,5]
@@ -751,6 +751,30 @@ def calibration_cirquits(type="", q_anc=[], N=0):
         qubits.reverse()
 
         qc.append(c_qc, [qr[1],qr[3],qr[5]])
+
+        ######## parte nuova in cui aggiungo i c-not del check e le x opportune affinchè il circuito rimanga una identità
+        if check == "yes":
+
+            qc.barrier()
+            l=0
+            qubits.reverse()
+            for k in qubits:
+                if pos_init[i][l]=='1':
+                    qc.x(qr[k])
+                    qc_1.x(qr_1[k])
+                l+=1
+            qubits.reverse()
+
+            qc = add_check(qc, [qr[1],qr[3],qr[5]], [qr[0],qr[2],qr[4]], type="copy_check")
+
+            l=0
+            qubits.reverse()
+            for k in qubits:
+                if pos_init[i][l]=='1':
+                    qc.x(qr[k])
+                    qc_1.x(qr_1[k])
+                l+=1
+            qubits.reverse()
 
         qc.barrier()
         qc_1.barrier()
