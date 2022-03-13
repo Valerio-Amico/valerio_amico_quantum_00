@@ -182,6 +182,20 @@ def add_check(qc, qr_q, qr_anc, type="copy_check"):
 
         qc.append(qc_ch, qr_anc + qr_q)
 
+    if type=="4copy_check":
+        qr_ch=QuantumRegister(7)
+        qc_ch=QuantumCircuit(qr_ch,name ='4copy_check')
+
+        qc_ch.cx(qr_ch[4],qr_ch[0])
+        qc_ch.cx(qr_ch[6],qr_ch[2])
+        qc_ch.cx(qr_ch[4],qr_ch[1])
+        qc_ch.cx(qr_ch[5],qr_ch[4])
+        qc_ch.cx(qr_ch[4],qr_ch[1])
+        qc_ch.cx(qr_ch[5],qr_ch[4])
+        qc_ch.cx(qr_ch[6],qr_ch[3])
+
+        qc.append(qc_ch, qr_anc + qr_q)
+        
     return qc
 
 def Mdg_circquit():
@@ -246,7 +260,7 @@ def semplyfied_gates(U, type, precision):
         a_3_2 = float(r2)
 
         qr1=QuantumRegister(2)
-        qc1=QuantumCircuit(qr1)
+        qc1=QuantumCircuit(qr1, name="gate_1")
 
         qc1.rz(a_1_1*2,qr1[1])
         qc1.h(qr1[0])
@@ -258,7 +272,7 @@ def semplyfied_gates(U, type, precision):
         qc1.rz(a_2_1*2,qr1[1])
 
         qr=QuantumRegister(2)
-        qc=QuantumCircuit(qr)
+        qc=QuantumCircuit(qr, name="gate_2")
 
         qc.rz(a_1_2*2,qr[1])
         qc.h(qr[0])
@@ -270,7 +284,75 @@ def semplyfied_gates(U, type, precision):
         qc.rz(a_2_2*2,qr[1])
 
         return qc1, qc
+    
+    if type == "DD":
 
+        b0=im(U[3*8+6])
+        b1=im(U[5*8+6])
+        alp0=re(U[3*8+6])
+        alp1=re(U[5*8+6])
+        alp2=re(U[6*8+6])
+
+        ### calcolo i coefficienti per i gate a 2 qubit
+
+        r1=acos(sqrt(alp2**2+b1**2))
+        a1=angolo(alp2,b1)
+        a2=0
+        phi1=np.pi+a2-angolo(alp1,b1)
+        r2=acos(sqrt(alp1**2+b1**2)/sin(r1))
+        phi2=-phi1-angolo(alp0,b0)
+
+        a_1_1 = -float(- a1 + phi1 - np.pi)/2
+        a_2_1 = float(a1 + phi1 - np.pi)/2
+        a_3_1 = float(r1)
+
+        a_1_2 = -float(- a2 + phi2 - np.pi)/2
+        a_2_2 = float(a2 + phi2 - np.pi)/2
+        a_3_2 = float(r2)
+
+        qr1=QuantumRegister(3)
+        qc1=QuantumCircuit(qr1, name="gate_1")
+
+        qc1.rz(a_1_1*2,qr1[1])
+        qc1.h(qr1[0])
+
+        qc1.cx(qr1[0],qr1[1])
+        qc1.ry(-a_3_1,qr1[0])
+        qc1.ry(-a_3_1,qr1[1])
+
+        qc1.cx(qr1[0],qr1[1])
+        qc1.h(qr1[0])
+        qc1.rz(a_2_1*2,qr1[1])
+
+        for _ in range(5):
+            qc1.x(qr1[2])
+            qc1.barrier(qr1[2])
+            qc1.x(qr1[2])
+            qc1.barrier(qr1[2])
+
+        qr=QuantumRegister(3)
+        qc=QuantumCircuit(qr, name="gate_2")
+
+        qc.rz(a_1_2*2,qr[1])
+        qc.h(qr[0])
+
+        qc.cx(qr[0],qr[1])
+        qc.ry(-a_3_2,qr[0])
+        qc.ry(-a_3_2,qr[1])
+
+        qc.cx(qr[0],qr[1])
+        qc.h(qr[0])
+        qc.rz(a_2_2*2,qr[1])
+
+        for _ in range(5):
+            qc.x(qr[2])
+            qc.barrier(qr[2])
+            qc.x(qr[2])
+            qc.barrier(qr[2])
+
+        return qc1, qc
+
+    return "error"
 
 def column_evolution_tomo(steps, tempo, precision, initial_state='110', check=[0]):
 
@@ -302,6 +384,7 @@ def column_evolution_tomo(steps, tempo, precision, initial_state='110', check=[0
     ### appending the evolution
 
     qc.append(gate_1, [qr[1],qr[3]])
+    qc.barrier()
     qc.x(qr[5])
     qc.append(gate_2, [qr[3],qr[5]])
 
@@ -813,8 +896,120 @@ def Toffoli_gate():
     return qc
 
 def matrix_from_cirquit(qc, phase=0):
+
     backend = Aer.get_backend('unitary_simulator')
     job = execute(qc, backend, shots=32000)
     result = job.result()
     A=result.get_unitary(qc, decimals=10)*np.exp(1j*phase)
     return Matrix(A)
+
+
+
+def ZNE_cirquits(type, N_steps, tempo, points_fit=4, precision=20, initial_state='110', check=[0]):
+
+    if initial_state != "110": 
+        print("warning! the state is always initialide as 110. Change the function!")
+
+    ### Hisemberg evolution with single column decomposition
+
+    U = Trotter_N_approx(steps=N_steps, tempo=tempo, precision=precision)
+    gate_1, gate_2 = semplyfied_gates(U, type="esatto", precision=precision)
+    id_cal = calibration_cirquit(type=type)
+
+    ### building the evolution cirquit
+
+    zne_qcs=[]
+    zne_qcs_na=[]
+
+    for i in range(points_fit):
+
+        qr=QuantumRegister(7, name="q")
+        qc=QuantumCircuit(qr, name="U")
+
+        
+        ### appending the evolution
+        qc.x(qr[3])
+        qc.append(gate_1, [qr[1],qr[3]])
+        qc.barrier()
+        qc.x(qr[5])
+        qc.append(gate_2, [qr[3],qr[5]])
+
+        for _ in range(i):
+            qc.append(id_cal,[qr[1],qr[3],qr[5]])
+        
+        if check==[0] or check==0 or check == []:
+            qcs=state_tomography_circuits(qc,[qr[1],qr[3],qr[5]])
+            zne_qcs=zne_qcs+qcs
+        
+        else:
+            anc=check[1]
+            N_anc=len(anc)
+
+            qc = add_check(qc, [qr[1],qr[3],qr[5]], anc, type=check[0])
+
+            ### macking the tomography
+
+            qcs=state_tomography_circuits(qc,[qr[1],qr[3],qr[5]])
+            qcs_na = deepcopy(qcs)
+
+            for qc_ in qcs:
+                cr_anc=ClassicalRegister(N_anc)
+                qc_.add_register(cr_anc)
+                qc_.barrier()
+                qc_.measure(anc,cr_anc)
+
+            zne_qcs=zne_qcs+qcs
+            zne_qcs_na=zne_qcs_na+qcs_na
+
+    if check==[0] or check==0 or check == []:
+        return zne_qcs
+    else:
+        return zne_qcs, zne_qcs_na
+
+def DD_cirquits(N_steps, tempo, precision=20, initial_state='110', check=[0]):
+    if initial_state != "110": 
+        print("warning! the state is always initialide as 110. Change the function!")
+
+    ### Hisemberg evolution with single column decomposition
+
+    U = Trotter_N_approx(steps=N_steps, tempo=tempo, precision=precision)
+    gate_1, gate_2 = semplyfied_gates(U, type="DD", precision=precision)
+
+    ### building the evolution cirquit
+
+    qr=QuantumRegister(7, name="q")
+    qc=QuantumCircuit(qr, name="U")
+
+    
+    ### appending the evolution
+    qc.x(qr[3])
+    qc.append(gate_1, [qr[1],qr[3],qr[5]])
+    #qc.barrier()
+    qc.x(qr[5])
+    qc.append(gate_2, [qr[3],qr[5],qr[1]])
+
+    if check==[0] or check==0 or check == []:
+        qcs=state_tomography_circuits(qc,[qr[1],qr[3],qr[5]])
+   
+    else:
+        anc=check[1]
+        N_anc=len(anc)
+
+        qc = add_check(qc, [qr[1],qr[3],qr[5]], anc, type=check[0])
+
+        ### macking the tomography
+
+        qcs=state_tomography_circuits(qc,[qr[1],qr[3],qr[5]])
+        qcs_na = deepcopy(qcs)
+
+        for qc_ in qcs:
+            cr_anc=ClassicalRegister(N_anc)
+            qc_.add_register(cr_anc)
+            qc_.barrier()
+            qc_.measure(anc,cr_anc)
+
+    if check==[0] or check==0 or check == []:
+        return qcs
+    else:
+        return qcs, qcs_na
+
