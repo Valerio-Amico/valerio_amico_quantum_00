@@ -183,6 +183,7 @@ def add_check(qc, qr_q, qr_anc, type="copy_check"):
         qc.append(qc_ch, qr_anc + qr_q)
 
     if type=="4copy_check":
+        
         qr_ch=QuantumRegister(7)
         qc_ch=QuantumCircuit(qr_ch,name ='4copy_check')
 
@@ -193,6 +194,33 @@ def add_check(qc, qr_q, qr_anc, type="copy_check"):
         qc_ch.cx(qr_ch[4],qr_ch[1])
         qc_ch.cx(qr_ch[5],qr_ch[4])
         qc_ch.cx(qr_ch[6],qr_ch[3])
+
+        qc.append(qc_ch, qr_anc + qr_q)
+
+    if type=="4copy_checkDD": 
+
+        qr_ch=QuantumRegister(7)
+        qc_ch=QuantumCircuit(qr_ch,name ='4copy_checkDD')
+
+        qc_ch.x([qr_ch[6],qr_ch[5]])
+        qc_ch.cx(qr_ch[4],qr_ch[0])
+        qc_ch.cx(qr_ch[4],qr_ch[1])
+
+        qc_ch.barrier()
+        qc_ch.x([qr_ch[5]])
+        qc_ch.cx(qr_ch[5],qr_ch[4])
+        qc_ch.cx(qr_ch[4],qr_ch[1])
+        qc_ch.x([qr_ch[1]])
+        qc_ch.cx(qr_ch[5],qr_ch[4])
+        qc_ch.x([qr_ch[5]])
+
+        qc_ch.barrier()
+        qc_ch.x(qr_ch[6])
+        qc_ch.cx(qr_ch[6],qr_ch[3])
+        qc_ch.barrier()
+        qc_ch.cx(qr_ch[6],qr_ch[2])
+        qc_ch.x([qr_ch[1]])
+        qc_ch.x([qr_ch[5]])
 
         qc.append(qc_ch, qr_anc + qr_q)
         
@@ -324,7 +352,7 @@ def semplyfied_gates(U, type, precision):
         qc1.h(qr1[0])
         qc1.rz(a_2_1*2,qr1[1])
 
-        for _ in range(5):
+        for _ in range(3):
             qc1.x(qr1[2])
             qc1.barrier(qr1[2])
             qc1.x(qr1[2])
@@ -804,7 +832,7 @@ def calibration_cirquit(type="", N=0):
 
     return "error"
 
-def calibration_cirquits(type="", q_anc=[], N=0, check="no"):
+def calibration_cirquits(type="", q_anc=[], N=0, check="no", check_type="copy_check"):
     c_qc = calibration_cirquit(type=type, N=N)
 
     qubits = q_anc+[1,3,5]
@@ -848,7 +876,10 @@ def calibration_cirquits(type="", q_anc=[], N=0, check="no"):
                 l+=1
             qubits.reverse()
 
-            qc = add_check(qc, [qr[1],qr[3],qr[5]], [qr[0],qr[2],qr[4]], type="copy_check")
+            if check_type=="copy_check":
+                qc = add_check(qc, [qr[1],qr[3],qr[5]], [qr[0],qr[2],qr[4]], type=check_type)
+            if check_type=="4copy_check":
+                qc = add_check(qc, [qr[1],qr[3],qr[5]], [qr[0],qr[2],qr[4],qr[6]], type=check_type)
 
             l=0
             qubits.reverse()
