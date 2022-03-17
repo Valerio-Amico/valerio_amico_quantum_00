@@ -1,0 +1,28 @@
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": 1,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import functions0 as f0\n",
+    "import numpy as np\n",
+    "import datetime\n",
+    "import qiskit.ignis.mitigation.measurement as mc\n",
+    "from qiskit import Aer, assemble, QuantumCircuit, QuantumRegister, ClassicalRegister, IBMQ, transpile, execute\n",
+    "from qiskit.providers.aer import AerSimulator, QasmSimulator\n",
+    "from qiskit.opflow import Zero, One, I, X, Y, Z\n",
+    "from qiskit.ignis.verification.tomography import state_tomography_circuits, StateTomographyFitter\n",
+    "from qiskit.quantum_info import state_fidelity\n",
+    "import matplotlib.pyplot as plt\n",
+    "\n",
+    "IBMQ.load_account()\n",
+    "provider = IBMQ.get_provider(hub='ibm-q-community', group='ibmquantumawards', project='open-science-22')\n",
+    "\n",
+    "sim_noisy_jakarta = QasmSimulator.from_backend(provider.get_backend('ibmq_jakarta'))\n",
+    "backend_sim_jakarta = sim_noisy_jakarta \n",
+    "backend = provider.get_backend('ibmq_jakarta')\n",
+    "backend_sim = Aer.get_backend('qasm_simulator')"
+   ]
+  },
