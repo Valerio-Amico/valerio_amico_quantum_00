@@ -471,9 +471,9 @@ def calibration_cirquit(type="", N=0):
         
         return qc
 
-    if type=="trotter_steps":
+    #if type=="trotter_steps":
 
-        return circ_cal_tot(N)
+    #    return circ_cal_tot(N)
 
 
     return "error"
