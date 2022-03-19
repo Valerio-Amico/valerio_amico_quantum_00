@@ -426,6 +426,7 @@ def column_evolution_tomo(steps, tempo, precision, initial_state='110', check=[0
     anc=check[1]
     N_anc=len(anc)
 
+    qc.barrier()
     qc = add_check(qc, [qr[1],qr[3],qr[5]], anc, type=check[0])
 
     ### macking the tomography
