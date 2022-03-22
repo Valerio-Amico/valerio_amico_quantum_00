@@ -935,6 +935,31 @@ def matrix_from_cirquit(qc, phase=0):
     A=result.get_unitary(qc, decimals=10)*np.exp(1j*phase)
     return Matrix(A)
 
+def jobs_result(job_evolution, reps=1):
+
+    backend_sim = Aer.get_backend('qasm_simulator')
+
+    qr=QuantumRegister(7)
+    qc=QuantumCircuit(qr)
+    qcs = state_tomography_circuits(qc, [qr[1],qr[3],qr[5]])
+    for qc in qcs:
+        cr = ClassicalRegister(4)
+        qc.add_register(cr)
+        qc.measure([qr[0],qr[2],qr[4],qr[6]],cr)
+
+    jobs_evo_res = []
+    for i in range(reps):
+    
+        job=execute(qcs,backend=backend_sim, shots=10)
+        results = job.result()
+        
+        for j in range(27):
+            results.results[j].data.counts = job_evolution.result().get_counts()[i*27+j]
+    
+        jobs_evo_res.append(results)
+
+    return jobs_evo_res
+
 
 
 def ZNE_cirquits(type, N_steps, tempo, points_fit=4, precision=20, initial_state='110', check=[0]):

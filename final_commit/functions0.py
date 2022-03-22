@@ -19,12 +19,9 @@ def trotter_step(a):
 
 def evolution_cirquit(steps=10, time=np.pi, initial_state="110", precision=40):
 
-    ### This function computes numerically the operator obtained with the composition of "steps" trotter steps.
+    ### This function computes numerically the operator obtained with the composition of "steps" trotter steps, and than builds the evolution cirquit.
     ### "time" is the total evolution time
     ### "precision" is the digit where every operation will be troncated.
-
-    a1, r1, f1 = symbols("a1 r1 f1")
-    a2, r2, f2 = symbols("a2 r2 f2")
 
     U = eye(8)
     a = symbols("a")
@@ -35,13 +32,8 @@ def evolution_cirquit(steps=10, time=np.pi, initial_state="110", precision=40):
         U=U*Trotter_Step
         U=U.subs(a,2*time/steps)
         U=U.evalf(precision)
-    
-    r1=float(angolo(U[3*8+6])+angolo(U[6*8+6]))/2
-    r2=0
-    f1=float(angolo(U[6*8+6])-angolo(U[5*8+6])-np.pi)/2
-    f2=float((angolo(U[6*8+6])-angolo(U[3*8+6]))/2-f1)
-    a1=float(acos(abs(U[6*8+6])))
-    a2=float(acos(abs(U[5*8+6])/sin(a1)))
+
+    r1, r2, f1, f2, a1, a2 = gates_parameters(initial_state=initial_state, U=U)
 
     qr1=QuantumRegister(2)
     M1_qc=QuantumCircuit(qr1, name="M1")
@@ -295,7 +287,53 @@ def fidelity_count(result, qcs, target_state):
 
 
 
+def gates_parameters(initial_state, U):
 
+    parity = Parity(initial_state)
+    column = BinaryToDecimal(initial_state)
+
+    if parity == 2:
+        A0 = U[3*8+column]
+        A1 = U[5*8+column]
+        A2 = U[6*8+column]
+    else:
+        A0 = U[3*8+column]
+        A1 = U[5*8+column]
+        A2 = U[6*8+column]
+
+    r1=float(angolo(U[3*8+6])+angolo(U[6*8+6]))/2
+    r2=0
+    f1=float(angolo(U[6*8+6])-angolo(U[5*8+6])-np.pi)/2
+    f2=float((angolo(U[6*8+6])-angolo(U[3*8+6]))/2-f1)
+    a1=float(acos(abs(U[6*8+6])))
+    a2=float(acos(abs(U[5*8+6])/sin(a1)))
+
+    return r1, r2, f1, f2, a1, a2
+
+def jobs_result(job_evolution, reps=1):
+
+    backend_sim = Aer.get_backend('qasm_simulator')
+
+    qr=QuantumRegister(7)
+    qc=QuantumCircuit(qr)
+    qcs = state_tomography_circuits(qc, [qr[1],qr[3],qr[5]])
+    for qc in qcs:
+        cr = ClassicalRegister(4)
+        qc.add_register(cr)
+        qc.measure([qr[0],qr[2],qr[4],qr[6]],cr)
+
+    jobs_evo_res = []
+    for i in range(reps):
+    
+        job=execute(qcs,backend=backend_sim, shots=10)
+        results = job.result()
+        
+        for j in range(27):
+            results.results[j].data.counts = job_evolution.result().get_counts()[i*27+j]
+    
+        jobs_evo_res.append(results)
+
+    return jobs_evo_res
 
 def calibration_cirquit(type="", N=0):
     if type=="complete_evolution":
@@ -538,4 +576,16 @@ def DecimalToBinary(num, N_bit):
         b='0'+b
     return b
 
+def BinaryToDecimal(bin):
+    d=0
+    for i in range(len(bin)):
+        if bin[-1-i]=='1':
+            d+=2**i
+    return d
 
+def Parity(bin):
+    p=0
+    for i in range(len(bin)):
+        if bin[i]=='1':
+            p+=1
+    return p
