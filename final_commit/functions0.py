@@ -6,34 +6,57 @@ from qiskit import Aer, assemble, QuantumCircuit, QuantumRegister, ClassicalRegi
 from qiskit.ignis.verification.tomography import state_tomography_circuits, StateTomographyFitter
 from qiskit.quantum_info import state_fidelity
 
-def trotter_step(a):
+def trotter_step_matrix(parameter):
     
+    '''
+    Here is computed the matrix of a single trotter step. It can be done numerically or symbolcally.
+
+    args:
+
+        - parameter: can be a sympy Symbol or a double.
+
+    returns:
+
+        - trotter_step_matrix: single trotter steps matrix (symbolic or numeric) with parameter=2*time/N_steps.
+
+    '''
+
     m = Matrix([
-        [exp(-I*a),0,0,0],
-        [0,cos(a),-I*sin(a),0],
-        [0,-I*sin(a),cos(a),0],
-        [0,0,0,exp(-I*a)]
+        [exp(-I*parameter),0,0,0],
+        [0,cos(parameter),-I*sin(parameter),0],
+        [0,-I*sin(parameter),cos(parameter),0],
+        [0,0,0,exp(-I*parameter)]
     ])
 
-    return Tp(m, eye(2)) * Tp(eye(2), m) * exp(I*a)
+    trotter_step_matrix = Tp(m, eye(2)) * Tp(eye(2), m) * exp(I*parameter)
 
-def evolution_cirquit(steps=10, time=np.pi, initial_state="110", precision=40):
+    return trotter_step_matrix
 
-    ### This function computes numerically the operator obtained with the composition of "steps" trotter steps, and than builds the evolution cirquit.
-    ### "time" is the total evolution time
-    ### "precision" is the digit where every operation will be troncated.
+def evolution_cirquit(n_steps=10, time=np.pi, initial_state="110", precision=40):
 
-    U = eye(8)
-    a = symbols("a")
+    '''
+    This function computes numerically the operator obtained with the composition of "steps" trotter steps,
+    and than builds the evolution cirquit with the best decomposition (4 c-not).
+    
+    args:
 
-    Trotter_Step = trotter_step(a)
+        - n_steps (integer): is the number of trotter steps.
+        - time (double): is the total evolution time.
+        - initial_state (string): the 3-qubit initial state, from right to left, the characters are associated with qubits 1, 3 and 5 respectively.
+        - precision (integer): is the digit where every operation will be troncated.
+    
+    returns:
 
-    for _ in range(steps):
-        U=U*Trotter_Step
-        U=U.subs(a,2*time/steps)
-        U=U.evalf(precision)
+        - qc (QuantumCirquit): 
+    '''
 
-    r1, r2, f1, f2, a1, a2 = gates_parameters(initial_state=initial_state, U=U)
+    numeric_evolution_matrix = eye(8)
+
+    for _ in range(n_steps): # here is computed the evolution operator numerically, with n_steps trotter steps.
+        numeric_evolution_matrix=numeric_evolution_matrix*trotter_step_matrix(2*time/n_steps)
+
+    # here are computed the parameters of the gates as described in "decomposition.ipynb" file.
+    r1, r2, f1, f2, a1, a2 = gates_parameters(initial_state=initial_state, U=numeric_evolution_matrix)
 
     qr1=QuantumRegister(2)
     M1_qc=QuantumCircuit(qr1, name="M1")
@@ -163,13 +186,13 @@ def calibration_cirquits(type="", q_anc=[], N=0, check="no", check_type="copy_ch
 
         if check == "yes":
 
-            qc.barrier()
+            #qc.barrier()
             l=0
             qubits.reverse()
             for k in qubits:
                 if pos_init[i][l]=='1':
                     qc.x(qr[k])
-                    qc_1.x(qr_1[k])
+                    #qc_1.x(qr_1[k])
                 l+=1
             qubits.reverse()
 
@@ -183,7 +206,7 @@ def calibration_cirquits(type="", q_anc=[], N=0, check="no", check_type="copy_ch
             for k in qubits:
                 if pos_init[i][l]=='1':
                     qc.x(qr[k])
-                    qc_1.x(qr_1[k])
+                    #qc_1.x(qr_1[k])
                 l+=1
             qubits.reverse()
 
@@ -284,6 +307,7 @@ def fidelity_count(result, qcs, target_state):
     rho_fit_ising = tomo_ising.fit(method='lstsq')
     fid=(state_fidelity(rho_fit_ising, target_state))
     return fid
+
 
 
 
@@ -528,7 +552,7 @@ def rz(alpha):   # generic rz gate matrix
         [0,exp(1j*(alpha/2))]
     ])
 
-def H():         # hadamart gate matrix
+def H():         # hadamard gate matrix
     return Matrix([ 
         [1/sqrt(2),1/sqrt(2)],
         [1/sqrt(2),-1/sqrt(2)]

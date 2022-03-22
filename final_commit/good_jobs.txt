@@ -8,3 +8,6 @@ cal_ID = "6233ae3ba2f72dff43da994f"
 3copy_check, steps=[5,6,8,10,12,16,20,30,40,50,69,99], reps=2, time = pi, date = 10-03-2022
 
 jobs=backend.retrieve_jobs(limit=30, start_datetime= "2022-03-9", end_datetime="2022-03-11")
+
+3) 
+4copy_check, time_range=np.linspace(0.01,np.pi,20), reps=8, steps=42
