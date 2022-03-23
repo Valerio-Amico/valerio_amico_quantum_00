@@ -38,16 +38,17 @@ def evolution_cirquit(n_steps=10, time=np.pi, initial_state="110", precision=40)
     This function computes numerically the operator obtained with the composition of "steps" trotter steps,
     and than builds the evolution cirquit with the best decomposition (4 c-not).
     
-    args:
+    Args:
 
         - n_steps (integer): is the number of trotter steps.
         - time (double): is the total evolution time.
         - initial_state (string): the 3-qubit initial state, from right to left, the characters are associated with qubits 1, 3 and 5 respectively.
         - precision (integer): is the digit where every operation will be troncated.
     
-    returns:
+    Returns:
 
         - qc (QuantumCirquit): 
+        
     '''
 
     numeric_evolution_matrix = eye(8)
@@ -58,37 +59,21 @@ def evolution_cirquit(n_steps=10, time=np.pi, initial_state="110", precision=40)
     # here are computed the parameters of the gates as described in "decomposition.ipynb" file.
     r1, r2, f1, f2, a1, a2 = gates_parameters(initial_state=initial_state, U=numeric_evolution_matrix)
 
-    qr1=QuantumRegister(2)
-    M1_qc=QuantumCircuit(qr1, name="M1")
+    # defining the two qubits gates that preserve the magnetization when applyed, with the parameters just computed.
+    M1_qc = fixed_magnetization_two_qubit_gate(r1,f1,a1)
+    M2_qc = fixed_magnetization_two_qubit_gate(r2,f2,a2)
 
-    M1_qc.rz(2*r1,qr1[1])
-    M1_qc.h(qr1[0])
-    M1_qc.cx(qr1[0],qr1[1])
-    M1_qc.ry(a1,qr1)
-    M1_qc.cx(qr1[0],qr1[1])
-    M1_qc.h(qr1[0])
-    M1_qc.rz(2*f1,qr1[1])
-
-    qr2=QuantumRegister(2)
-    M2_qc=QuantumCircuit(qr2, name="M2")
-
-    #M2_qc.rz(2*r2,qr2[1])
-    M2_qc.h(qr2[0])
-    M2_qc.cx(qr2[0],qr2[1])
-    M2_qc.ry(a2,qr2)
-    M2_qc.cx(qr2[0],qr2[1])
-    M2_qc.h(qr2[0])
-    M2_qc.rz(2*f2,qr2[1])
-
+    # defining and building the quantum cirquit.
     qr = QuantumRegister(7 ,name="q")
     qc = QuantumCircuit(qr, name="U")
 
+    # initializing the state as choosen in "initial_state".
     l=0
     for k in [5,3,1]:
         if initial_state[l]=='1':
             qc.x(qr[k])
         l+=1
-
+    
     qc.append(M1_qc, [qr[1],qr[3]])
     qc.append(M2_qc, [qr[3],qr[5]])
 
@@ -310,6 +295,25 @@ def fidelity_count(result, qcs, target_state):
 
 
 
+def fixed_magnetization_two_qubit_gate(phase1,phase2,ry_arg):
+    '''
+
+
+
+    '''
+
+    qr=QuantumRegister(2)
+    M_qc=QuantumCircuit(qr, name="M")
+
+    M_qc.rz(2*phase1,qr[1])
+    M_qc.h(qr[0])
+    M_qc.cx(qr[0],qr[1])
+    M_qc.ry(ry_arg,qr)
+    M_qc.cx(qr[0],qr[1])
+    M_qc.h(qr[0])
+    M_qc.rz(2*phase2,qr[1])
+
+    return M_qc
 
 def gates_parameters(initial_state, U):
 
