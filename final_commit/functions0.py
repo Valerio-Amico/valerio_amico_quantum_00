@@ -11,11 +11,11 @@ def trotter_step_matrix(parameter):
     '''
     Here is computed the matrix of a single trotter step. It can be done numerically or symbolcally.
 
-    args:
+    Args:
 
         - parameter: can be a sympy Symbol or a double.
 
-    returns:
+    Returns:
 
         - trotter_step_matrix: single trotter steps matrix (symbolic or numeric) with parameter=2*time/N_steps.
 
@@ -52,9 +52,9 @@ def evolution_cirquit(n_steps=10, time=np.pi, initial_state="110", precision=40)
     '''
 
     numeric_evolution_matrix = eye(8)
-
+    
     for _ in range(n_steps): # here is computed the evolution operator numerically, with n_steps trotter steps.
-        numeric_evolution_matrix=numeric_evolution_matrix*trotter_step_matrix(2*time/n_steps)
+        numeric_evolution_matrix=(numeric_evolution_matrix*trotter_step_matrix(2*time/n_steps)).evalf(precision)
 
     # here are computed the parameters of the gates as described in "decomposition.ipynb" file.
     r1, r2, f1, f2, a1, a2 = gates_parameters(initial_state=initial_state, U=numeric_evolution_matrix)
@@ -292,6 +292,21 @@ def fidelity_count(result, qcs, target_state):
     rho_fit_ising = tomo_ising.fit(method='lstsq')
     fid=(state_fidelity(rho_fit_ising, target_state))
     return fid
+
+def circuits_without_ancillas(job):
+    qcs_without_ancillas = []
+    
+    for cir in job.circuits():
+        circuit=cir.copy()
+        circuit.remove_final_measurements()
+        c=ClassicalRegister(3, name="c")
+        circuit.add_register(c)
+        circuit.barrier()
+        circuit.measure([1,3,5],c)
+
+        qcs_without_ancillas.append(circuit)
+    
+    return qcs_without_ancillas
 
 
 
@@ -570,7 +585,7 @@ def cx_01():     # c-not(0,1) gate matrix
         [0,1,0,0]
     ])
 
-def angolo(x):
+def angolo(x): ## QUESTA FUNZIONE NON SERVE A NIENTE!!!!! usare atan2 di sympy.
     alpha=re(x)
     beta=im(x)
     if alpha>0:

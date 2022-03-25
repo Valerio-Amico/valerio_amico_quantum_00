@@ -960,6 +960,21 @@ def jobs_result(job_evolution, reps=1):
 
     return jobs_evo_res
 
+def circuits_without_ancillas(job):
+    qcs_without_ancillas = []
+    
+    for cir in job.circuits():
+        circuit=cir.copy()
+        circuit.remove_final_measurements()
+        c=ClassicalRegister(3, name="c")
+        circuit.add_register(c)
+        circuit.barrier()
+        circuit.measure([1,3,5],c)
+
+        qcs_without_ancillas.append(circuit)
+    
+    return qcs_without_ancillas
+
 
 
 def ZNE_cirquits(type, N_steps, tempo, points_fit=4, precision=20, initial_state='110', check=[0]):
