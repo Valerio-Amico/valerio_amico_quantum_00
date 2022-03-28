@@ -323,7 +323,7 @@ def BinaryToDecimal(bin):
             d+=2**i
     return d
 
-def parity(bin):
+def Parity(bin):
     p=0
     for i in range(len(bin)):
         if bin[i]=='1':

@@ -223,7 +223,7 @@ def add_check(qc, qr_q, qr_anc, type="copy_check"):
         qc_ch.x([qr_ch[5]])
 
         qc.append(qc_ch, qr_anc + qr_q)
-        
+
     return qc
 
 def Mdg_circquit():
