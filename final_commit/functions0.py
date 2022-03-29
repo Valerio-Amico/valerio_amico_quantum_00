@@ -208,6 +208,18 @@ def mitigate(raw_results, Measure_Mitig="yes", ancillas_conditions=[], meas_fitt
     '''
     This function computes the mitigated results of a job.
 
+    Args: 
+
+        - raw_results (job result): the results of the job without any mitigation, just runned.
+        - Measure_Mitig (string): two options:
+                                - "yes": it will do the measure mitigation with the calibration matrix passed "meas_fitter".
+                                - "no": will not do the measure mitigation.
+        - ancillas_conditions (list of string): contains strings of "0" and "1", that correspond to the states allowed for the ancillas.
+                                                for example: if the initial state belong to the subspace with magnetization = 2, wi know 
+                                                that the state will be in the same subspace for all the evolution. So "ancillas_condition"
+                                                should be equal to ["011","110","101"] if we use 3 ancillas.
+        - meas_fitter (CompleteMeasFitter): The calibration matrix, for the measurament mitigation.
+        
     '''
 
     N_ancillas=len(ancillas_conditions[0]) # number of ancillas qubits

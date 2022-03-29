@@ -50,7 +50,7 @@ def gates_parameters(initial_state, U):
 
     return r1, r2, f1, f2, a1, a2
 
-def jobs_result(job_evolution, reps=1):
+def jobs_result(job_evolution, reps=1, ancillas=[]):
 
     backend_sim = Aer.get_backend('qasm_simulator')
 
@@ -58,9 +58,12 @@ def jobs_result(job_evolution, reps=1):
     qc=QuantumCircuit(qr)
     qcs = state_tomography_circuits(qc, [qr[1],qr[3],qr[5]])
     for qc in qcs:
-        cr = ClassicalRegister(4)
+        cr = ClassicalRegister(len(ancillas))
         qc.add_register(cr)
-        qc.measure([qr[0],qr[2],qr[4],qr[6]],cr)
+        i=0
+        for j in ancillas:
+            qc.measure(qr[j],cr[i])
+            i+=1
 
     jobs_evo_res = []
     for i in range(reps):

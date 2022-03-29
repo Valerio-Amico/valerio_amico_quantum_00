@@ -520,6 +520,7 @@ def evolution_tomo(type, N_steps, tempo, precision=20, initial_state='110', chec
 def mitigate(raw_results, Measure_Mitig="yes", ancillas_conditions=[], meas_fitter=0):
 
     N_ancillas=len(ancillas_conditions[0])
+    
     N_qubit=N_ancillas+3
     new_result = deepcopy(raw_results)
     new_result_nm = deepcopy(raw_results)
@@ -935,7 +936,7 @@ def matrix_from_cirquit(qc, phase=0):
     A=result.get_unitary(qc, decimals=10)*np.exp(1j*phase)
     return Matrix(A)
 
-def jobs_result(job_evolution, reps=1):
+def jobs_result(job_evolution, reps=1, ancillas=[]):
 
     backend_sim = Aer.get_backend('qasm_simulator')
 
@@ -943,9 +944,12 @@ def jobs_result(job_evolution, reps=1):
     qc=QuantumCircuit(qr)
     qcs = state_tomography_circuits(qc, [qr[1],qr[3],qr[5]])
     for qc in qcs:
-        cr = ClassicalRegister(4)
+        cr = ClassicalRegister(len(ancillas))
         qc.add_register(cr)
-        qc.measure([qr[0],qr[2],qr[4],qr[6]],cr)
+        i=0
+        for j in ancillas:
+            qc.measure(qr[j],cr[i])
+            i+=1
 
     jobs_evo_res = []
     for i in range(reps):
