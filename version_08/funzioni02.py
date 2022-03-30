@@ -964,7 +964,7 @@ def jobs_result(job_evolution, reps=1, ancillas=[]):
 
     return jobs_evo_res
 
-def circuits_without_ancillas(job):
+def circuits_without_ancillas_measuraments(job):
     qcs_without_ancillas = []
     
     for cir in job.circuits():
