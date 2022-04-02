@@ -11,6 +11,8 @@ fid = 99.2 %
 
 jobs=backend.retrieve_jobs(limit=30, start_datetime= "2022-03-9", end_datetime="2022-03-11")
 
+fid > 99.0%
+
 3) 
 4copy_check, time_range=np.linspace(0.01,np.pi,20), reps=8, steps=42
 

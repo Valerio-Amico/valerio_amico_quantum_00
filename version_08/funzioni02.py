@@ -981,6 +981,7 @@ def circuits_without_ancillas_measuraments(job):
 
 
 
+
 def ZNE_cirquits(type, N_steps, tempo, points_fit=4, precision=20, initial_state='110', check=[0]):
 
     if initial_state != "110": 

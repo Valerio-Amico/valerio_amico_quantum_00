@@ -27,21 +27,38 @@ def fixed_magnetization_two_qubit_gate(phase1,phase2,ry_arg):
 
     return M_qc
 
-def gates_parameters(initial_state, U):
+def get_gates_parameters(initial_state, U):
 
-    parity = Parity(initial_state)
+    magnetization = Magnetization(initial_state)
     column = BinaryToDecimal(initial_state)
 
-    if parity == 2:
-        A0 = U[3*8+column]
-        A1 = U[5*8+column]
-        A2 = U[6*8+column]
-    else:
+    if magnetization == 0:
         A0 = U[3*8+column]
         A1 = U[5*8+column]
         A2 = U[6*8+column]
 
-    r1=float(angolo(U[3*8+6])+angolo(U[6*8+6]))/2
+        r1=float(atan2(im(A0),re(A0))+atan2(im(A2),re(A2)))/2
+        r2=0
+        f1=float(atan2(im(A2),re(A2))-atan2(im(A1),re(A1))-np.pi)/2
+        f2=float((atan2(im(A2),re(A2))-atan2(im(A0),re(A0)))/2-f1)
+        a1=float(acos(abs(A2)))
+        a2=float(acos(abs(A1)/sin(a1)))
+
+    else: 
+        if magnetization == 1:
+            A0 = U[4*8+column]
+            A1 = U[2*8+column]
+            A2 = U[1*8+column]
+
+            r1=float(-atan2(im(A0),re(A0))-atan2(im(A2),re(A2)))/2
+            r2=0
+            f1=float(atan2(im(A1),re(A1))-atan2(im(A2),re(A2)))/2
+            f2=float((atan2(im(A0),re(A0))-atan2(im(A1),re(A1)))/2-f1)
+            a1=float(acos(abs(A2)))
+            a2=float(acos(abs(A1)/sin(a1)))
+
+
+    r1=float(atan2(U[3*8+6])+angolo(U[6*8+6]))/2
     r2=0
     f1=float(angolo(U[6*8+6])-angolo(U[5*8+6])-np.pi)/2
     f2=float((angolo(U[6*8+6])-angolo(U[3*8+6]))/2-f1)
@@ -326,11 +343,31 @@ def BinaryToDecimal(bin):
             d+=2**i
     return d
 
-def Parity(bin):
+def Magnetization(bin):
     p=0
     for i in range(len(bin)):
         if bin[i]=='1':
             p+=1
     return p
 
+def Toffoli_gate():
+    qr=QuantumRegister(3, name="q")
+    qc=QuantumCircuit(qr, name="Toffoli")
+    qc.t([qr[0],qr[1]])
+    qc.h(qr[2])
+    qc.t(qr[2])
+    qc.cx(qr[0],qr[1])
+    qc.cx(qr[1],qr[2])
+    qc.tdg(qr[1])
+    qc.t(qr[2])
+    qc.cx(qr[0],qr[1])
+    qc.cx(qr[1],qr[2])
+    qc.cx(qr[0],qr[1])
+    qc.tdg(qr[2])
+    qc.cx(qr[1],qr[2])
+    qc.tdg(qr[2])
+    qc.cx(qr[0],qr[1])
+    qc.cx(qr[1],qr[2])
+    qc.h(qr[2])
 
+    return qc

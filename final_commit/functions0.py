@@ -36,15 +36,16 @@ def trotter_step_matrix(parameter):
 def evolution_cirquit(n_steps=10, time=np.pi, initial_state="110", precision=40):
 
     '''
-    This function computes numerically the operator obtained with the composition of "steps" trotter steps,
-    and than builds the evolution cirquit with the best decomposition (4 c-not), see "decomposition.ipynb".
+    This function computes numerically the operator obtained with the composition of "n_steps" trotter steps,
+    and than builds the evolution cirquit with the best decomposition (4 c-not), 
+    with a evolution time equals to "time" (see "decomposition.ipynb").
     
     Args:
 
         - n_steps (integer): is the number of trotter steps.
         - time (double): is the total evolution time.
         - initial_state (string): the 3-qubit initial state, from right to left, the characters are associated with qubits 1, 3 and 5 respectively.
-        - precision (integer): is the digit where every operation will be troncated.
+        - precision (integer): is the digit where every numerical operation will be troncated.
     
     Returns:
 
@@ -58,7 +59,7 @@ def evolution_cirquit(n_steps=10, time=np.pi, initial_state="110", precision=40)
         numeric_evolution_matrix=(numeric_evolution_matrix*trotter_step_matrix(2*time/n_steps)).evalf(precision)
 
     # here are computed the parameters of the gates as described in "decomposition.ipynb" file.
-    r1, r2, f1, f2, a1, a2 = gates_parameters(initial_state=initial_state, U=numeric_evolution_matrix)
+    r1, r2, f1, f2, a1, a2 = get_gates_parameters(initial_state=initial_state, U=numeric_evolution_matrix)
 
     # defining the two qubits gates that preserve the magnetization when applyed, with the parameters just computed.
     M1_qc = fixed_magnetization_two_qubit_gate(r1,f1,a1)
@@ -69,6 +70,8 @@ def evolution_cirquit(n_steps=10, time=np.pi, initial_state="110", precision=40)
     qc = QuantumCircuit(qr, name="U")
 
     # initializing the state as choosen in "initial_state".
+    initial_state = "110"
+
     l=0
     for k in [5,3,1]:
         if initial_state[l]=='1':
