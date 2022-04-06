@@ -637,6 +637,7 @@ def fidelity_count(result, qcs, target_state):
     tomo_ising=StateTomographyFitter(result, qcs)
     rho_fit_ising = tomo_ising.fit(method='lstsq')
     #fid=(state_fidelity(rho_fit_ising, target_state))
+    print(rho_fit_ising)
     fid=state_fidelity(target_state, rho_fit_ising)
     print("attenzione ho invertito gli arg di state_fidelity")
     return fid
@@ -693,10 +694,10 @@ def circ_cal_tot(steps):
     return qc
 
 def calibration_cirquit(type="", N_steps=0, time=np.pi):
+    from qiskit import Aer, QuantumCircuit, QuantumRegister, execute
 
     if type=="itself":
-        from qiskit import Aer, QuantumCircuit, QuantumRegister, execute
-
+        
         a=Symbol("a", real=True)
 
         U = eye(8)
@@ -781,30 +782,37 @@ def calibration_cirquit(type="", N_steps=0, time=np.pi):
         qc=QuantumCircuit(qr)    
         qc.x(qr[0])
         qc.y(qr[0])
+        qc.barrier(qr[0])
         qc.x(qr[0])
         qc.y(qr[0])  
 
         qc.x(qr[1])
         qc.y(qr[1])
+        qc.barrier(qr[1])
         qc.x(qr[1])
         qc.y(qr[1]) 
 
         qc.cx(qr[0],qr[1]) 
+        qc.barrier()
 
         qc.x(qr[0])
         qc.y(qr[0])
+        qc.barrier(qr[0])
         qc.x(qr[0])
         qc.y(qr[0])
 
         qc.x(qr[1])
         qc.y(qr[1])
+        qc.barrier(qr[1])
         qc.x(qr[1])
         qc.y(qr[1])    
 
         qc.cx(qr[0],qr[1])   
+        qc.barrier()
 
         qc.x(qr[0])
         qc.y(qr[0])
+        qc.barrier(qr[0])
         qc.x(qr[0])
         qc.y(qr[0])    
 
@@ -816,30 +824,34 @@ def calibration_cirquit(type="", N_steps=0, time=np.pi):
 
         qc.x(qr[0])
         qc.y(qr[0])
+        qc.barrier(qr[0])
         qc.x(qr[0])
         qc.y(qr[0])    
 
         qc.x(qr[1])
         qc.y(qr[1])
+        qc.barrier(qr[1])
         qc.x(qr[1])
         qc.y(qr[1])    
 
         qc.cx(qr[0],qr[1])   
-
-        qc.barrier()    
+        qc.barrier()
 
         qc.x(qr[2])
         qc.y(qr[2])
+        qc.barrier(qr[2])
         qc.x(qr[2])
         qc.y(qr[2])    
 
         qc.cx(qr[1],qr[2])
         qc.cx(qr[0],qr[1])
+        qc.barrier()
         qc.cx(qr[1],qr[2])
         qc.cx(qr[0],qr[1])
         qc.barrier()
         qc.cx(qr[0],qr[1])
         qc.cx(qr[1],qr[2])
+        qc.barrier()
         qc.cx(qr[0],qr[1])
         qc.cx(qr[1],qr[2])    
 
@@ -1006,11 +1018,12 @@ def calibration_cirquits(type="", n_steps=0, time=np.pi, q_anc=[], check="no", c
         qc_1=QuantumCircuit(qr_1,cr_1,name='%scal_%s' % ('', DecimalToBinary(i,N_qubits)))
 
         l=0
+        
         qubits.reverse()
         for k in qubits:
             if pos_init[i][l]=='1':
                 qc.x(qr[k])
-                qc_1.x(qr_1[k])
+                #qc_1.x(qr_1[k])
             l+=1
         qubits.reverse()
 
@@ -1020,32 +1033,34 @@ def calibration_cirquits(type="", n_steps=0, time=np.pi, q_anc=[], check="no", c
         if check == "yes":
 
             qc.barrier()
-            '''
+            
             l=0
-            qubits.reverse()
-            for k in qubits:
-                if pos_init[i][l]=='1':
-                    qc.x(qr[k])
-                    qc_1.x(qr_1[k])
-                l+=1
-            qubits.reverse()
-            '''
+            if type!="itself" and type!="itself_whole":
+                qubits.reverse()
+                for k in qubits:
+                    if pos_init[i][l]=='1':
+                        qc.x(qr[k])
+                        #qc_1.x(qr_1[k])
+                    l+=1
+                qubits.reverse()
+            
 
             if check_type=="copy_check":
                 qc = add_check(qc, [qr[1],qr[3],qr[5]], [qr[0],qr[2],qr[4]], type=check_type)
             if check_type=="4copy_check":
                 qc = add_check(qc, [qr[1],qr[3],qr[5]], [qr[0],qr[2],qr[4],qr[6]], type=check_type)
 
-            '''
+            
             l=0
-            qubits.reverse()
-            for k in qubits:
-                if pos_init[i][l]=='1':
-                    qc.x(qr[k])
-                    qc_1.x(qr_1[k])
-                l+=1
-            qubits.reverse()
-            '''
+            if type!="itself" and type!="itself_whole":
+                qubits.reverse()
+                for k in qubits:
+                    if pos_init[i][l]=='1':
+                        qc.x(qr[k])
+                        #qc_1.x(qr_1[k])
+                    l+=1
+                qubits.reverse()
+            
 
         qc.barrier()
         qc_1.barrier()

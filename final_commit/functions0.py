@@ -429,13 +429,15 @@ def calibration_cirquits(type="", q_anc=[], N=0, time=np.pi, check="no", check_t
 
             #qc.barrier()
             l=0
-            qubits.reverse()
-            for k in qubits:
-                if pos_init[i][l]=='1':
-                    qc.x(qr[k])
-                    #qc_1.x(qr_1[k])
-                l+=1
-            qubits.reverse()
+            print("aggiustare questa cosa delle x nel check")
+            if type!="itself" and type!="itself_whole":
+                qubits.reverse()
+                for k in qubits:
+                    if pos_init[i][l]=='1':
+                        qc.x(qr[k])
+                        #qc_1.x(qr_1[k])
+                    l+=1
+                qubits.reverse()
 
             if check_type=="copy_check":
                 qc = add_symmetry_check(qc, [qr[1],qr[3],qr[5]], [qr[0],qr[2],qr[4]], type=check_type)
@@ -443,13 +445,14 @@ def calibration_cirquits(type="", q_anc=[], N=0, time=np.pi, check="no", check_t
                 qc = add_symmetry_check(qc, [qr[1],qr[3],qr[5]], [qr[0],qr[2],qr[4],qr[6]], type=check_type)
 
             l=0
-            qubits.reverse()
-            for k in qubits:
-                if pos_init[i][l]=='1':
-                    qc.x(qr[k])
-                    #qc_1.x(qr_1[k])
-                l+=1
-            qubits.reverse()
+            if type!="itself" and type!="itself_whole":
+                qubits.reverse()
+                for k in qubits:
+                    if pos_init[i][l]=='1':
+                        qc.x(qr[k])
+                        #qc_1.x(qr_1[k])
+                    l+=1
+                qubits.reverse()
 
         qc.barrier()
         qc_1.barrier()
