@@ -35,3 +35,12 @@ id_tomo = 624dbafbf65d78c03a38fbb6
 id_cal_identity = 624dbafe182d0267144c22e8
 id_cal_itself = 624dbb01cfe45c43e6e59cbd
 id_cal_qiskit = 624dbb03aacb9beb455f46e3
+
+7)
+n_steps=99, time=np.pi, initial_state="110", reps = 1, shots = 32000, precision=50, check=["4copy_check", [0,2,4,6]]
+evo_type="column_evolution"
+
+id_tomo = 624dc20c4b515250027c63f4
+id_cal_identity = 624dc210f65d785beb38fbea
+id_cal_itself = 624dc213aacb9b2d545f473e
+id_cal_qiskit = 624dc215182d0200d84c2334
