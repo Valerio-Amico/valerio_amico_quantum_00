@@ -774,7 +774,9 @@ def calibration_cirquit(type="", N_steps=0, time=np.pi):
 
         return qc
 
-
+    if type=="complete_evolution_remake":
+        return calibration_cirquit(type="itself_whole", N_steps=N_steps, time=time)
+        
 
     if type=="complete_evolution":
         #circuito calibrazione per 14-cnot
@@ -790,7 +792,7 @@ def calibration_cirquit(type="", N_steps=0, time=np.pi):
         qc.y(qr[1])
         qc.barrier(qr[1])
         qc.x(qr[1])
-        qc.y(qr[1]) 
+        qc.y(qr[1])  
 
         qc.cx(qr[0],qr[1]) 
         qc.barrier()
@@ -805,7 +807,9 @@ def calibration_cirquit(type="", N_steps=0, time=np.pi):
         qc.y(qr[1])
         qc.barrier(qr[1])
         qc.x(qr[1])
-        qc.y(qr[1])    
+        qc.y(qr[1]) 
+
+   
 
         qc.cx(qr[0],qr[1])   
         qc.barrier()
@@ -1018,48 +1022,69 @@ def calibration_cirquits(type="", n_steps=0, time=np.pi, q_anc=[], check="no", c
         qc_1=QuantumCircuit(qr_1,cr_1,name='%scal_%s' % ('', DecimalToBinary(i,N_qubits)))
 
         l=0
-        
-        qubits.reverse()
-        for k in qubits:
-            if pos_init[i][l]=='1':
+        if type!="complete_evolution_remake":
+            qubits.reverse()
+            for k in qubits:
+                if pos_init[i][l]=='1':
+                    qc.x(qr[k])
+                    #qc_1.x(qr_1[k])
+                l+=1
+            qubits.reverse()
+        else:
+            for k in [1,3,5]:
                 qc.x(qr[k])
-                #qc_1.x(qr_1[k])
-            l+=1
-        qubits.reverse()
 
         qc.append(c_qc, [qr[1],qr[3],qr[5]])
-
-        ######## parte nuova in cui aggiungo i c-not del check e le x opportune affinchè il circuito rimanga una identità
-        if check == "yes":
-
-            qc.barrier()
+    
+        if type=="complete_evolution_remake":
+            for k in [1,3,5]:
+                qc.x(qr[k])
             
-            l=0
-            if type!="itself" and type!="itself_whole":
-                qubits.reverse()
-                for k in qubits:
-                    if pos_init[i][l]=='1':
-                        qc.x(qr[k])
-                        #qc_1.x(qr_1[k])
-                    l+=1
-                qubits.reverse()
-            
-
             if check_type=="copy_check":
                 qc = add_check(qc, [qr[1],qr[3],qr[5]], [qr[0],qr[2],qr[4]], type=check_type)
             if check_type=="4copy_check":
                 qc = add_check(qc, [qr[1],qr[3],qr[5]], [qr[0],qr[2],qr[4],qr[6]], type=check_type)
 
-            
-            l=0
-            if type!="itself" and type!="itself_whole":
-                qubits.reverse()
-                for k in qubits:
-                    if pos_init[i][l]=='1':
-                        qc.x(qr[k])
-                        #qc_1.x(qr_1[k])
-                    l+=1
-                qubits.reverse()
+            qubits.reverse()
+            for k in qubits:
+                if pos_init[i][l]=='1':
+                    qc.x(qr[k])
+                    #qc_1.x(qr_1[k])
+                l+=1
+            qubits.reverse()
+
+        else:
+        ######## parte nuova in cui aggiungo i c-not del check e le x opportune affinchè il circuito rimanga una identità
+            if check == "yes":
+
+                #qc.barrier()
+                
+                l=0
+                if type!="itself" and type!="itself_whole":
+                    qubits.reverse()
+                    for k in qubits:
+                        if pos_init[i][l]=='1':
+                            qc.x(qr[k])
+                            #qc_1.x(qr_1[k])
+                        l+=1
+                    qubits.reverse()
+                
+
+                if check_type=="copy_check":
+                    qc = add_check(qc, [qr[1],qr[3],qr[5]], [qr[0],qr[2],qr[4]], type=check_type)
+                if check_type=="4copy_check":
+                    qc = add_check(qc, [qr[1],qr[3],qr[5]], [qr[0],qr[2],qr[4],qr[6]], type=check_type)
+
+                
+                l=0
+                if type!="itself" and type!="itself_whole":
+                    qubits.reverse()
+                    for k in qubits:
+                        if pos_init[i][l]=='1':
+                            qc.x(qr[k])
+                            #qc_1.x(qr_1[k])
+                        l+=1
+                    qubits.reverse()
             
 
         qc.barrier()

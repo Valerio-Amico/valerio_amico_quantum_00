@@ -283,6 +283,9 @@ def calibration_cirquit(type="", n_steps=0, time=np.pi):
 
         return qc
     
+    if type=="column_evolution_remake2":
+        return calibration_cirquit(type="itself", n_steps=n_steps, time=time)
+
     if type=="column_evolution_remake":
         qr=QuantumRegister(3)
         qc=QuantumCircuit(qr)
@@ -414,14 +417,15 @@ def calibration_cirquits(type="", q_anc=[], N=0, time=np.pi, check="no", check_t
         qr_1=QuantumRegister(N_qubits)
         qc_1=QuantumCircuit(qr_1,cr_1,name='%scal_%s' % ('', DecimalToBinary(i,N_qubits)))
 
-        l=0
-        qubits.reverse()
-        for k in qubits:
-            if pos_init[i][l]=='1':
-                qc.x(qr[k])
-                qc_1.x(qr_1[k])
-            l+=1
-        qubits.reverse()
+        if type!="column_evolution_remake2":
+            l=0
+            qubits.reverse()
+            for k in qubits:
+                if pos_init[i][l]=='1':
+                    qc.x(qr[k])
+                    qc_1.x(qr_1[k])
+                l+=1
+            qubits.reverse()
 
         qc.append(c_qc, [qr[1],qr[3],qr[5]])
 
@@ -430,7 +434,7 @@ def calibration_cirquits(type="", q_anc=[], N=0, time=np.pi, check="no", check_t
             #qc.barrier()
             l=0
             print("aggiustare questa cosa delle x nel check")
-            if type!="itself" and type!="itself_whole":
+            if type!="itself" and type!="itself_whole" and type!="column_evolution_remake2":
                 qubits.reverse()
                 for k in qubits:
                     if pos_init[i][l]=='1':
@@ -445,7 +449,7 @@ def calibration_cirquits(type="", q_anc=[], N=0, time=np.pi, check="no", check_t
                 qc = add_symmetry_check(qc, [qr[1],qr[3],qr[5]], [qr[0],qr[2],qr[4],qr[6]], type=check_type)
 
             l=0
-            if type!="itself" and type!="itself_whole":
+            if type!="itself" and type!="itself_whole" and type!="column_evolution_remake2":
                 qubits.reverse()
                 for k in qubits:
                     if pos_init[i][l]=='1':
@@ -453,6 +457,16 @@ def calibration_cirquits(type="", q_anc=[], N=0, time=np.pi, check="no", check_t
                         #qc_1.x(qr_1[k])
                     l+=1
                 qubits.reverse()
+
+        if type=="column_evolution_remake2":
+            l=0
+            qubits.reverse()
+            for k in qubits:
+                if pos_init[i][l]=='1':
+                    qc.x(qr[k])
+                    qc_1.x(qr_1[k])
+                l+=1
+            qubits.reverse()
 
         qc.barrier()
         qc_1.barrier()
