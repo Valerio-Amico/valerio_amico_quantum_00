@@ -3,7 +3,7 @@
 # Python cache
 *.pyc
 */__pycache__/
-*.ipynpb_checkpoints/
+*/.ipynb_checkpoints/
 
 # System generated files
 *.DS_store
