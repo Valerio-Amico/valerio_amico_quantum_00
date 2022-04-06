@@ -20,3 +20,4 @@ fid = 99.4% (l'ultimo punto, corrispondente a t=pi)
 
 4)
 check=["4copy_check", [0,2,4,6]], reps=2, steps=88, time_range=np.linspace(0.01,np.pi,15)
+

@@ -407,14 +407,23 @@ def column_evolution_tomo(steps, tempo, precision, initial_state='110', check=[0
     #    if initial_state[l]=='1':
     #        qc.x(qr[k])
     #    l+=1
-    qc.x(qr[3])
-
+    if initial_state=="000":
     ### appending the evolution
 
-    qc.append(gate_1, [qr[1],qr[3]])
-    qc.barrier()
-    qc.x(qr[5])
-    qc.append(gate_2, [qr[3],qr[5]])
+        qc.append(gate_1, [qr[1],qr[3]])
+        qc.barrier()
+        qc.append(gate_2, [qr[3],qr[5]])
+
+    else:
+            
+        qc.x(qr[3])
+
+        ### appending the evolution
+
+        qc.append(gate_1, [qr[1],qr[3]])
+        qc.barrier()
+        qc.x(qr[5])
+        qc.append(gate_2, [qr[3],qr[5]])
 
     ### macking the tomography if there is no check
 
@@ -517,7 +526,19 @@ def evolution_tomo(type, N_steps, tempo, precision=20, initial_state='110', chec
         return f1.U_approx_tomo(steps=N_steps,trot_type="our",time=tempo,checks=[],initial_state=initial_state[::-1])
     return "errore"
     
-def mitigate(raw_results, Measure_Mitig="yes", ancillas_conditions=[], meas_fitter=0):
+def mitigate(raw_results, ancillas_conditions=[], meas_fitter=None):
+
+    if meas_fitter is None:
+        # Mitigazione senza fitter
+        pass
+
+    if "__tens_fitt" in dir(meas_fitter):
+        # Mitigazione con fitter singolo
+        pass
+
+    if '__iter__' in dir(meas_fitter):
+        # Mitigazione con lista di filtri
+        pass
 
     N_ancillas=len(ancillas_conditions[0])
     
@@ -535,11 +556,13 @@ def mitigate(raw_results, Measure_Mitig="yes", ancillas_conditions=[], meas_fitt
         X_aus+=r[j][N_ancillas:]
         r_split.append(X_aus)
 
-    for i in range(len(raw_results.results)): 
+    for i in range(len(raw_results.results)):
         
         old_counts = raw_results.get_counts(i)
         new_counts = {}
         new_counts_nm = {}
+
+        # cambia il numero di classical bit dei reults
 
         new_result.results[i].header.creg_sizes = [new_result.results[i].header.creg_sizes[0]]
         new_result.results[i].header.clbit_labels = new_result.results[i].header.clbit_labels[0:-1]
@@ -548,8 +571,6 @@ def mitigate(raw_results, Measure_Mitig="yes", ancillas_conditions=[], meas_fitt
         new_result_nm.results[i].header.creg_sizes = [new_result_nm.results[i].header.creg_sizes[0]]
         new_result_nm.results[i].header.clbit_labels = new_result_nm.results[i].header.clbit_labels[0:-1]
         new_result_nm.results[i].header.memory_slots = 3
-
-
 
         #if Measure_Mitig=="yes" and meas_fitter != 0:
         if N_ancillas>0:
@@ -565,13 +586,26 @@ def mitigate(raw_results, Measure_Mitig="yes", ancillas_conditions=[], meas_fitt
 
         new_result_nm.results[i].data.counts = new_counts_nm
 
-        if Measure_Mitig=="yes" and meas_fitter != 0:
+        if meas_fitter is not None:
             if N_ancillas>0:
                 for j in range(2**N_qubit):
                     if r_split[j] in old_counts.keys():
                         old_counts[r[j]] = old_counts.pop(r_split[j])
+
+            print(i)
+
+            if "_tens_fitt" in dir(meas_fitter):
+                #print(old_counts)
+                print("tens_fitt")
+                old_counts = meas_fitter.filter.apply(old_counts, method='least_squares')
+                
             
-            old_counts = meas_fitter.filter.apply(old_counts, method='least_squares')
+            if '__iter__' in dir(meas_fitter):
+                print(i, np.shape(meas_fitter[i].filter._cal_matrix))
+                meas_fitter_aus = deepcopy(meas_fitter[i])
+                print("deepcopy")
+                
+                old_counts = meas_fitter_aus.filter.apply(old_counts, method='least_squares')
 
             if N_ancillas>0:
                 for j in range(2**N_qubit):
@@ -591,10 +625,13 @@ def mitigate(raw_results, Measure_Mitig="yes", ancillas_conditions=[], meas_fitt
         
             new_result.results[i].data.counts = new_counts
 
-    if Measure_Mitig=="yes" and meas_fitter != 0:
+    if meas_fitter is not None:
         return new_result, new_result_nm
     else:
         return new_result_nm
+
+
+
 
 def fidelity_count(result, qcs, target_state):
     tomo_ising=StateTomographyFitter(result, qcs)
@@ -653,7 +690,89 @@ def circ_cal_tot(steps):
     
     return qc
 
-def calibration_cirquit(type="", N=0):
+def calibration_cirquit(type="", N_steps=0, time=np.pi):
+
+    if type=="itself":
+        from qiskit import Aer, QuantumCircuit, QuantumRegister, execute
+
+        a=Symbol("a", real=True)
+
+        U = eye(8)
+        Trotter_Step = trotter_step_matrix(a)
+
+        for _ in range(N_steps):
+            U=U*Trotter_Step
+            U=U.subs(a,2*time/N_steps)
+            U=U.evalf(40)
+
+        U.evalf(4)
+
+        r1_=float(atan2(im(U[3*8+6]),re(U[3*8+6]))+atan2(im(U[6*8+6]),re(U[6*8+6])))/2
+        r2_=0
+        f1_=float(atan2(im(U[6*8+6]),re(U[6*8+6]))-atan2(im(U[5*8+6]),re(U[5*8+6]))-np.pi)/2
+        f2_=float((atan2(im(U[6*8+6]),re(U[6*8+6]))-atan2(im(U[3*8+6]),re(U[3*8+6])))/2-f1_)
+        a1_=float(acos(abs(U[6*8+6])))
+        a2_=float(acos(abs(U[5*8+6])/sin(a1_)))
+
+        qr1=QuantumRegister(2)
+        M1_qc=QuantumCircuit(qr1, name="M1")
+
+        M1_qc.rz(2*r1_,qr1[1])
+        M1_qc.h(qr1[0])
+        M1_qc.cx(qr1[0],qr1[1])
+        M1_qc.ry(a1_,qr1)
+        M1_qc.cx(qr1[0],qr1[1])
+        M1_qc.h(qr1[0])
+        M1_qc.rz(2*f1_,qr1[1])
+
+        qr2=QuantumRegister(2)
+        M2_qc=QuantumCircuit(qr2, name="M2")
+
+        #M2_qc.rz(2*r2,qr2[1])
+        M2_qc.h(qr2[0])
+        M2_qc.cx(qr2[0],qr2[1])
+        M2_qc.ry(a2_,qr2)
+        M2_qc.cx(qr2[0],qr2[1])
+        M2_qc.h(qr2[0])
+        M2_qc.rz(2*f2_,qr2[1])
+
+        qr = QuantumRegister(3 ,name="q")
+        qc = QuantumCircuit(qr, name="U")
+
+        qc.append(M1_qc, [qr[0],qr[1]])
+        qc.append(M2_qc, [qr[1],qr[2]])
+
+        return qc
+
+    if type=="itself_whole":
+        U = Trotter_N_approx(steps=N_steps, tempo=time, precision=45)
+
+        U2=[
+            [U[3*8+3],U[3*8+5],U[3*8+6],0],
+            [U[5*8+3],U[5*8+5],U[5*8+6],0],
+            [U[6*8+3],U[6*8+5],U[6*8+6],0],
+            [0,0,0,1]
+        ]
+        from qiskit import Aer, assemble, QuantumCircuit, QuantumRegister
+        qc=QuantumCircuit(2)
+        qc.unitary(U2,[0,1])    
+        trans_qc=transpile(qc,basis_gates=['cx','x','sx','rz']) 
+
+        ### building the evolution cirquit
+
+        qr=QuantumRegister(3, name="q")
+        qc=QuantumCircuit(qr, name="U")
+
+
+        ### appending the evolution
+
+        qc.append(trans_qc,[qr[0],qr[1]])
+        qc.append(Mdg_circquit().inverse(),[qr[0],qr[1],qr[2]])
+
+        return qc
+
+
+
     if type=="complete_evolution":
         #circuito calibrazione per 14-cnot
         qr=QuantumRegister(3)
@@ -834,10 +953,40 @@ def calibration_cirquit(type="", N=0):
 
     return "error"
 
-def calibration_cirquits(type="", q_anc=[], N=0, check="no", check_type="copy_check"):
-    c_qc = calibration_cirquit(type=type, N=N)
+def trotter_step_matrix(parameter):
+    
+    '''
+    Here is computed the matrix of a single trotter step. It can be done numerically or symbolcally.
 
-    qubits = q_anc+[1,3,5]
+    Args:
+
+        - parameter: can be a sympy Symbol or a double.
+
+    Returns:
+
+        - trotter_step_matrix: single trotter steps matrix (symbolic or numeric) with parameter=2*time/N_steps.
+
+    '''
+
+    m = Matrix([
+        [exp(-I*parameter),0,0,0],
+        [0,cos(parameter),-I*sin(parameter),0],
+        [0,-I*sin(parameter),cos(parameter),0],
+        [0,0,0,exp(-I*parameter)]
+    ])
+
+    trotter_step_matrix = Tp(m, eye(2)) * Tp(eye(2), m) * exp(I*parameter)
+
+    return trotter_step_matrix
+
+def calibration_cirquits(type="", n_steps=0, time=np.pi, q_anc=[], check="no", check_type="copy_check"):
+    ### attenzione correggere n_step: è 0 a posta per dare errori.
+    precision=45
+    initial_state = "110"
+
+    c_qc = calibration_cirquit(type=type, N_steps=n_steps, time=time)
+
+    qubits = [1,3,5]+q_anc
     N_qubits = len(qubits)
     pos_init = bin_list(N_qubits)
 
@@ -869,6 +1018,7 @@ def calibration_cirquits(type="", q_anc=[], N=0, check="no", check_type="copy_ch
         if check == "yes":
 
             qc.barrier()
+            '''
             l=0
             qubits.reverse()
             for k in qubits:
@@ -877,12 +1027,14 @@ def calibration_cirquits(type="", q_anc=[], N=0, check="no", check_type="copy_ch
                     qc_1.x(qr_1[k])
                 l+=1
             qubits.reverse()
+            '''
 
             if check_type=="copy_check":
                 qc = add_check(qc, [qr[1],qr[3],qr[5]], [qr[0],qr[2],qr[4]], type=check_type)
             if check_type=="4copy_check":
                 qc = add_check(qc, [qr[1],qr[3],qr[5]], [qr[0],qr[2],qr[4],qr[6]], type=check_type)
 
+            '''
             l=0
             qubits.reverse()
             for k in qubits:
@@ -891,6 +1043,7 @@ def calibration_cirquits(type="", q_anc=[], N=0, check="no", check_type="copy_ch
                     qc_1.x(qr_1[k])
                 l+=1
             qubits.reverse()
+            '''
 
         qc.barrier()
         qc_1.barrier()
@@ -928,13 +1081,16 @@ def Toffoli_gate():
 
     return qc
 
-def matrix_from_cirquit(qc, phase=0):
+def matrix_from_cirquit(qc, phase=0, type="sympy"):
 
     backend = Aer.get_backend('unitary_simulator')
     job = execute(qc, backend, shots=32000)
     result = job.result()
     A=result.get_unitary(qc, decimals=10)*np.exp(1j*phase)
-    return Matrix(A)
+    if type=="sympy":
+        return Matrix(A)
+    else:
+        return A
 
 def jobs_result(job_evolution, reps=1, ancillas=[]):
 
@@ -979,8 +1135,75 @@ def circuits_without_ancillas_measuraments(job):
     
     return qcs_without_ancillas
 
+def fixed_magnetization_two_qubit_gate(phase1,phase2,ry_arg):
+    '''
 
 
+
+    '''
+
+    qr=QuantumRegister(2)
+    M_qc=QuantumCircuit(qr, name="M")
+
+    M_qc.rz(2*phase1,qr[1])
+    M_qc.h(qr[0])
+    M_qc.cx(qr[0],qr[1])
+    M_qc.ry(ry_arg,qr)
+    M_qc.cx(qr[0],qr[1])
+    M_qc.h(qr[0])
+    M_qc.rz(2*phase2,qr[1])
+
+    return M_qc
+
+
+
+def BinaryToDecimal(bin):
+    d=0
+    for i in range(len(bin)):
+        if bin[-1-i]=='1':
+            d+=2**i
+    return d
+
+def Magnetization(bin):
+    p=0
+    for i in range(len(bin)):
+        if bin[i]=='1':
+            p+=1
+    return p
+
+def get_gates_parameters(initial_state, U):
+
+    #a1, r1, f1_, a2, r2, f2_ = symbols("a1 r1 f1 a2 r2 f2", real=True)
+
+    magnetization = Magnetization(initial_state)
+    column = BinaryToDecimal(initial_state)
+
+    if magnetization == 0:
+        A0 = U[3*8+column]
+        A1 = U[5*8+column]
+        A2 = U[6*8+column]
+
+        r1j=float(atan2(im(A0),re(A0))+atan2(im(A2),re(A2)))/2
+        r2=0
+        f1_=float(atan2(im(A2),re(A2))-atan2(im(A1),re(A1))-np.pi)/2
+        f2_=float((atan2(im(A2),re(A2))-atan2(im(A0),re(A0)))/2-f1_)
+        a1=float(acos(abs(A2)))
+        a2=float(acos(abs(A1)/sin(a1)))
+
+    else: 
+        if magnetization == 1:
+            A0 = U[4*8+column]
+            A1 = U[2*8+column]
+            A2 = U[1*8+column]
+
+            r1j=float(-atan2(im(A0),re(A0))-atan2(im(A2),re(A2)))/2
+            r2=0
+            f1_=float(atan2(im(A1),re(A1))-atan2(im(A2),re(A2)))/2
+            f2_=float((atan2(im(A0),re(A0))-atan2(im(A1),re(A1)))/2-f1_)
+            a1=float(acos(abs(A2)))
+            a2=float(acos(abs(A1)/sin(a1)))
+
+    return r1j, r2, f1_, f2_, a1, a2
 
 def ZNE_cirquits(type, N_steps, tempo, points_fit=4, precision=20, initial_state='110', check=[0]):
 

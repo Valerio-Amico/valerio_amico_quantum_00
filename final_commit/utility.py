@@ -29,10 +29,16 @@ def fixed_magnetization_two_qubit_gate(phase1,phase2,ry_arg):
 
 def get_gates_parameters(initial_state, U):
 
+    # adattare per qualsiasi stato iniziale.
+    initial_state="110"
+    print("metti apposto lo stato iniziale!")
+
     magnetization = Magnetization(initial_state)
     column = BinaryToDecimal(initial_state)
+    print(column)
+    print(magnetization)
 
-    if magnetization == 0:
+    if magnetization == 2:
         A0 = U[3*8+column]
         A1 = U[5*8+column]
         A2 = U[6*8+column]
@@ -57,13 +63,6 @@ def get_gates_parameters(initial_state, U):
             a1=float(acos(abs(A2)))
             a2=float(acos(abs(A1)/sin(a1)))
 
-
-    r1=float(atan2(U[3*8+6])+angolo(U[6*8+6]))/2
-    r2=0
-    f1=float(angolo(U[6*8+6])-angolo(U[5*8+6])-np.pi)/2
-    f2=float((angolo(U[6*8+6])-angolo(U[3*8+6]))/2-f1)
-    a1=float(acos(abs(U[6*8+6])))
-    a2=float(acos(abs(U[5*8+6])/sin(a1)))
 
     return r1, r2, f1, f2, a1, a2
 
@@ -94,187 +93,6 @@ def jobs_result(job_evolution, reps=1, ancillas=[]):
         jobs_evo_res.append(results)
 
     return jobs_evo_res
-
-def calibration_cirquit(type="", N=0):
-    if type=="complete_evolution":
-        #circuito calibrazione per 14-cnot
-        qr=QuantumRegister(3)
-        qc=QuantumCircuit(qr)    
-        qc.x(qr[0])
-        qc.y(qr[0])
-        qc.x(qr[0])
-        qc.y(qr[0])  
-
-        qc.x(qr[1])
-        qc.y(qr[1])
-        qc.x(qr[1])
-        qc.y(qr[1]) 
-
-        qc.cx(qr[0],qr[1]) 
-
-        qc.x(qr[0])
-        qc.y(qr[0])
-        qc.x(qr[0])
-        qc.y(qr[0])
-
-        qc.x(qr[1])
-        qc.y(qr[1])
-        qc.x(qr[1])
-        qc.y(qr[1])    
-
-        qc.cx(qr[0],qr[1])   
-
-        qc.x(qr[0])
-        qc.y(qr[0])
-        qc.x(qr[0])
-        qc.y(qr[0])    
-
-        qc.x(qr[1])
-        qc.barrier()
-        qc.x(qr[1])   
-
-        qc.cx(qr[0],qr[1])    
-
-        qc.x(qr[0])
-        qc.y(qr[0])
-        qc.x(qr[0])
-        qc.y(qr[0])    
-
-        qc.x(qr[1])
-        qc.y(qr[1])
-        qc.x(qr[1])
-        qc.y(qr[1])    
-
-        qc.cx(qr[0],qr[1])   
-
-        qc.barrier()    
-
-        qc.x(qr[2])
-        qc.y(qr[2])
-        qc.x(qr[2])
-        qc.y(qr[2])    
-
-        qc.cx(qr[1],qr[2])
-        qc.cx(qr[0],qr[1])
-        qc.cx(qr[1],qr[2])
-        qc.cx(qr[0],qr[1])
-        qc.barrier()
-        qc.cx(qr[0],qr[1])
-        qc.cx(qr[1],qr[2])
-        qc.cx(qr[0],qr[1])
-        qc.cx(qr[1],qr[2])    
-
-        return qc
-    
-    if type=="column_evolution_remake":
-        qr=QuantumRegister(3)
-        qc=QuantumCircuit(qr)
-
-        qc.x([qr[0],qr[1]])
-        qc.sx(qr[0])
-        qc.barrier()
-        qc.sx(qr[0])
-        qc.x(qr[1])
-        qc.cx(qr[0],qr[1])
-        qc.x([qr[0],qr[1]])
-        qc.sx([qr[0],qr[1]])
-        qc.barrier()
-        qc.sx([qr[0],qr[1]])
-        
-        qc.cx(qr[0],qr[1])
-        qc.x([qr[0],qr[1]])
-        qc.sx(qr[0])
-        qc.barrier()
-        qc.sx(qr[0])
-        qc.x(qr[1])
-        qc.barrier()
-        qc.x([qr[1],qr[2]])
-        qc.sx(qr[1])
-        qc.barrier()
-        qc.sx(qr[1])
-        qc.x(qr[2])
-        qc.cx(qr[1],qr[2])
-        qc.x([qr[1],qr[2]])
-        qc.sx([qr[1],qr[2]])
-        qc.barrier()
-        qc.sx([qr[1],qr[2]])
-        
-        qc.cx(qr[1],qr[2])
-        qc.x([qr[1],qr[2]])
-        qc.sx(qr[1])
-        qc.barrier()
-        qc.sx(qr[1])
-        qc.x(qr[2])
-
-        return qc
-
-    if type=="column_evolution":
-        #circuito calibrazione per 4-cnot
-        qr=QuantumRegister(3)
-        qc=QuantumCircuit(qr)
-        qc.x(qr[0])
-        qc.y(qr[0])
-        qc.sx(qr[0])
-        qc.barrier()
-        qc.sx(qr[0])
-        qc.x(qr[1])
-        qc.y([qr[0],qr[1]])
-        qc.barrier()
-        qc.x(qr[1])
-        qc.y(qr[1])    
-        qc.cx(qr[0],qr[1])
-        qc.x(qr[0])
-        qc.y(qr[0])
-        qc.barrier()
-        qc.x(qr[0])
-        qc.y(qr[0])
-        qc.cx(qr[0],qr[1])    
-        qc.x(qr[0])
-        qc.y(qr[0])
-        qc.x(qr[0])
-        qc.barrier()
-        qc.y(qr[0])
-        qc.x(qr[1])
-        qc.y(qr[1])
-        qc.barrier()
-        qc.x(qr[1])
-        qc.y(qr[1]) 
-        qc.x(qr[1])
-        qc.barrier()   
-        qc.y(qr[1])
-        qc.x(qr[1])
-        qc.y(qr[1])  
-        qc.x(qr[2])
-        qc.y(qr[2])
-        qc.barrier()
-        qc.x(qr[2])
-        qc.y(qr[2])
-        qc.cx(qr[1],qr[2])    
-        qc.x(qr[1])
-        qc.y(qr[1])
-        qc.barrier() 
-        qc.x(qr[1])
-        qc.y(qr[1])    
-        qc.cx(qr[1],qr[2])    
-        qc.x(qr[1])
-        qc.y(qr[1])
-        qc.barrier()
-        qc.x(qr[1])
-        qc.y(qr[1])    
-        qc.x(qr[2])
-        qc.y(qr[2])
-        qc.barrier()
-        qc.x(qr[2])
-        qc.y(qr[2])    
-        
-        return qc
-
-    #if type=="trotter_steps":
-
-    #    return circ_cal_tot(N)
-
-
-    return "error"
 
 def ry(alpha):   # generic ry gate matrix
         return Matrix([ 
