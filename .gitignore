@@ -1,0 +1,9 @@
+# Ignored files in commit
+
+# Python cache
+*.pyc
+*/__pycache__/
+*.ipynpb_checkpoints/
+
+# 
+*.DS_store
