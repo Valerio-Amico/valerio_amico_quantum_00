@@ -636,7 +636,9 @@ def mitigate(raw_results, ancillas_conditions=[], meas_fitter=None):
 def fidelity_count(result, qcs, target_state):
     tomo_ising=StateTomographyFitter(result, qcs)
     rho_fit_ising = tomo_ising.fit(method='lstsq')
-    fid=(state_fidelity(rho_fit_ising, target_state))
+    #fid=(state_fidelity(rho_fit_ising, target_state))
+    fid=state_fidelity(target_state, rho_fit_ising)
+    print("attenzione ho invertito gli arg di state_fidelity")
     return fid
 
 def circ_cal_trot():
