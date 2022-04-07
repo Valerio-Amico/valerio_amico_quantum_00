@@ -7,6 +7,8 @@ name = "pypi"
 sympy = "==1.9"
 qiskit = "==0.35"
 matplotlib = "*"
+pylatexenc = "*"
+numpy = "==1.21"
 
 [dev-packages]
 
