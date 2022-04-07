@@ -80,6 +80,25 @@ def symmetry_check(type="copy_check"):
 
     return qc_ch
 
+def build_circuit(circuit_list, number_of_qubits , name=None):
+    """Builds a circuit described by a dictionary of gates and qubits index
+    
+    The circuit_list must be given in format:
+
+    [["gate_1", [qubits_index] ], ["gate_2", [qubits_index]] ]
+
+    This is a djanloo test, so it may contain a bad usage of qiskit.
+    """
+    register = QuantumRegister(number_of_qubits, name=name + "_register")
+    circuit = QuantumCircuit(register, name=name)
+    for element in circuit_list:
+        gate_name, qubits = element
+        qubits = [circuit(qubit_index) for qubit_index in qubits] 
+        gate = getattr(circuit, gate_name)
+        gate(*qubits)
+    return circuit
+
+
 def add_symmetry_check(qc, qr_control_qubits, qr_ancillas, type="copy_check"):
 
     '''
