@@ -86,7 +86,7 @@ def build_circuit(circuit_list, number_of_qubits , name=None):
     The circuit_list must be given in format:
 
     [["gate_1", [qubits_index] ], ["gate_2", [qubits_index]] ]
-    
+
     """
     register = QuantumRegister(number_of_qubits, name=name + "_register")
     circuit = QuantumCircuit(register, name=name)
