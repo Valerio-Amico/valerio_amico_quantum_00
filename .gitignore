@@ -6,6 +6,9 @@
 */.ipynb_checkpoints/
 
 # System generated files
-*.DS_store
+.DS_store
+
+# Ignore directory
+# /ignored_files
 
 ciao.txt
