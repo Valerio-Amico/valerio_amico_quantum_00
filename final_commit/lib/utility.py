@@ -8,10 +8,7 @@ from qiskit.quantum_info import state_fidelity
 
 
 def fixed_magnetization_two_qubit_gate(phase1,phase2,ry_arg):
-    '''
-
-
-
+    ''' 
     '''
 
     qr=QuantumRegister(2)
@@ -27,16 +24,16 @@ def fixed_magnetization_two_qubit_gate(phase1,phase2,ry_arg):
 
     return M_qc
 
-def get_gates_parameters(initial_state, U):
+def get_gates_parameters(initial_state={"011": 0.2, "110": 0.1, "101": 0.95}, U):
 
-    # adattare per qualsiasi stato iniziale.
-    initial_state="110"
-    print("metti apposto lo stato iniziale!")
-
-    magnetization = Magnetization(initial_state)
-    column = BinaryToDecimal(initial_state)
-    print(column)
-    print(magnetization)
+    # Builds up the array associated to the initial state
+    state = np.zeros(8)
+    magnetization = sum(map(int, initial_state.keys()[0]))
+    for base_vector, amplitude in initial_state:
+        if map(sum(base_vector)) != magnetization:
+            raise ValueError("States must have the same magnetization!")
+        state[int(base_vector, 2)] = amplitude
+    print(f"the vector is {state}")
 
     if magnetization == 2:
         A0 = U[3*8+column]
