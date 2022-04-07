@@ -1,7 +1,7 @@
 import numpy as np
 from .utility import *
 from copy import deepcopy
-from sympy import *
+from sympy import Matrix, I
 from sympy.physics.quantum import TensorProduct as Tp
 from qiskit import Aer, assemble, QuantumCircuit, QuantumRegister, ClassicalRegister, IBMQ, transpile, execute
 from qiskit.ignis.verification.tomography import state_tomography_circuits, StateTomographyFitter
@@ -86,8 +86,7 @@ def build_circuit(circuit_list, number_of_qubits , name=None):
     The circuit_list must be given in format:
 
     [["gate_1", [qubits_index] ], ["gate_2", [qubits_index]] ]
-
-    This is a djanloo test, so it may contain a bad usage of qiskit.
+    
     """
     register = QuantumRegister(number_of_qubits, name=name + "_register")
     circuit = QuantumCircuit(register, name=name)
