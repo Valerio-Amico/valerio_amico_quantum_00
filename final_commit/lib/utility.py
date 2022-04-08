@@ -48,6 +48,8 @@ def get_gates_parameters(U, initial_state={"110": 1.0}):
         state[int(base_vector, 2)] = amplitude
     print(f"get_gates_parameters() - the vector is {state}")
 
+    # Sends an (alpha, beta, gamma) state of fixed magnetization 
+    # into a (alpha_prime, beta_prime, gamma_prime) state of the same mag
     state = U.dot(state)
 
     if magnetization == 2:
