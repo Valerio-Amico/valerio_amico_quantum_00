@@ -27,6 +27,9 @@ def fixed_magnetization_two_qubit_gate(phase1,phase2,ry_arg):
 def get_gates_parameters(U, initial_state={"110": 1.0}):
     """Finds the parameters of the gates based on the system of equations
     defined by the numerical evolution matrix.
+
+    Since the evolution is trivial in the magnetization 0 and 3 
+    the procedure is done only for mag==1 and mag==2
     
     Args
     ----
@@ -48,39 +51,39 @@ def get_gates_parameters(U, initial_state={"110": 1.0}):
         state[int(base_vector, 2)] = amplitude
     print(f"get_gates_parameters() - the vector is {state}")
 
-    # Sends an (alpha, beta, gamma) state of fixed magnetization 
-    # into a (alpha_prime, beta_prime, gamma_prime) state of the same mag
+    # Sends an (a, b, c) state of fixed magnetization 
+    # into a (alpha, beta, gamma) state of the same mag
     state = U.dot(state)
+    alpha, beta, gamma = state[state != 0.0]
 
     if magnetization == 2:
         # Checks if all the components are in the mag==2 subspace
         if np.arange(8)[state != 0] != [3,5,6]:
             raise RuntimeError("Something went wrong! State has wrong components")
 
-        alpha_prime, beta_prime, gamma_prime = state[state != 0.0]
-
-        r1 = 0.5*(np.angle(alpha_prime) + np.angle(gamma_prime))
+        r1 = 0.5*(np.angle(alpha) + np.angle(gamma))
         r2 = 0
 
-        f1 = 0.5*(np.angle(gamma_prime) + np.angle(beta_prime) - np.pi)
-        f2 = 0.5*(np.angle(gamma_prime) - np.angle(alpha_prime)) - f1
+        f1 = 0.5*(np.angle(gamma) + np.angle(beta) - np.pi)
+        f2 = 0.5*(np.angle(gamma) - np.angle(alpha)) - f1
 
-        a1 = np.arccos(np.abs(gamma_prime))
-        a2 = np.arccos(np.abs(beta_prime)/np.sin(a1))
+        a1 = np.arccos(np.abs(gamma))
+        a2 = np.arccos(np.abs(beta)/np.sin(a1))
 
-    else: 
-        if magnetization == 1:
-            A0 = U[4*8+column]
-            A1 = U[2*8+column]
-            A2 = U[1*8+column]
+    elif magnetization == 1:
+        # Checks if all the components are in the mag==1 subspace
+        if np.arange(8)[state != 0] != [1,2,4]:
+            raise RuntimeError("Something went wrong! State has wrong components")
 
-            r1=float(-atan2(im(A0),re(A0))-atan2(im(A2),re(A2)))/2
-            r2=0
-            f1=float(atan2(im(A1),re(A1))-atan2(im(A2),re(A2)))/2
-            f2=float((atan2(im(A0),re(A0))-atan2(im(A1),re(A1)))/2-f1)
-            a1=float(acos(abs(A2)))
-            a2=float(acos(abs(A1)/sin(a1)))
+        r1 = 0.5*(-np.angle(alpha) - np.angle(gamma))
+        r2 = 0
 
+        f1 = 0.5*(np.angle(beta)-np.angle(gamma))
+        f2 = 0.5*(np.angle(alpha)-np.angle(beta)) - f1
+
+        a1 = np.arcos(np.abs(gamma))
+        a2 = np.arccos(np.abs(beta)     /np.sin(a1)    )
+ 
 
     return r1, r2, f1, f2, a1, a2
 
