@@ -74,8 +74,8 @@ def get_gates_parameters(U, initial_state={"110": 1.0}):
         r1 = 0.5 * (np.angle(alpha) + np.angle(gamma))
         r2 = 0
 
-        f1 = 0.5 * (np.angle(gamma) + np.angle(beta) - np.pi)
-        f2 = 0.5 * (np.angle(gamma) - np.angle(alpha)) - f1
+        f1 = 0.5 * (np.angle(gamma) - np.angle(beta) - np.pi)
+        f2 = 0.5 * (np.angle(beta) - np.angle(alpha) + np.pi)
 
         a1 = np.arccos(np.abs(gamma))
         a2 = np.arccos(np.abs(beta) / np.sin(a1))
