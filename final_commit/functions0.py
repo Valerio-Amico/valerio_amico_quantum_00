@@ -7,6 +7,10 @@ from qiskit import Aer, assemble, QuantumCircuit, QuantumRegister, ClassicalRegi
 from qiskit.ignis.verification.tomography import state_tomography_circuits, StateTomographyFitter
 from qiskit.quantum_info import state_fidelity
 
+#global staff
+
+#TROTTER_STEP_MATRIX = trotter_step_matrix(2*time/n_steps)
+
 #funzioni verificate
 
 def trotter_step_matrix(parameter):
@@ -144,7 +148,7 @@ def evolution_cirquit_single_state(time=np.pi, n_steps=42, initial_state={"110":
     Args:
 
         - n_steps (integer): is the number of trotter steps.
-        - time (double): is the total evolution time.
+        - time (float): is the total evolution time.
         - initial_state (string): the 3-qubit initial state, from right to left, the characters are associated with qubits 1, 3 and 5 respectively.
         - precision (integer): is the digit where every numerical operation will be troncated.
     
