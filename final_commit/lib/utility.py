@@ -187,6 +187,7 @@ def occurrences_to_matrix(occurrences_list):
     counts_matrix = np.zeros((8,8))
     for i, counts in enumerate(occurrences_list):
         for state in counts:
+            print(f"prepared {i} arrived at {int(state, 2)}")
             counts_matrix[int(state, 2), i] = counts[state]
         print(f"Column sum is {np.sum(counts_matrix[:,i])}")
         counts_matrix[:,i] /= np.sum(counts_matrix[:,i])
