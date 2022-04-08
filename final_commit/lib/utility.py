@@ -150,7 +150,7 @@ def DecimalToBinary(num, number_of_qubits):
 
 def bin_list(N_qubits):
     """Generates the list of strings of all binary numbers"""
-    return [DecimalToBinary(n, N_qubits) for n in range(N_qubits)]
+    return [DecimalToBinary(n, N_qubits) for n in range(2**N_qubits)]
 
 def Toffoli_gate():
     """Builds a modified Toffoli gate adapted to Jakarta geometry"""

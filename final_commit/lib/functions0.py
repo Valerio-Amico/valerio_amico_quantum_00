@@ -235,8 +235,8 @@ def evolution_circuit_single_state(
     return qr, qc
 
 
-def calibration_circuit(type="", n_steps=0, time=np.pi):
-    """Generates the calibration cricuit for the given calibration procedure."""
+def get_calibration_circuit(type="", n_steps=0, time=np.pi):
+    """Generates the calibration circuit for the given calibration procedure."""
 
     # THis part literally bulds the circuit again, it' unnecessary
     """if type == "itself":
@@ -344,7 +344,7 @@ def calibration_circuit(type="", n_steps=0, time=np.pi):
 
     if type == "column_evolution_remake":
         qr = QuantumRegister(3)
-        qc = QuantumCircuit(qr)
+        qc = QuantumCircuit(qr, name="IdCirc")
 
         qc.x([qr[0], qr[1]])
         qc.sx(qr[0])
@@ -452,14 +452,14 @@ def calibration_circuit(type="", n_steps=0, time=np.pi):
     return "error"
 
 
-def calibration_circuits(type="", 
+def build_calibration_circuits_for_all_base_elements(type="", 
                         q_anc=[], 
                         N=0, 
                         time=np.pi, 
                         check="no", 
                         check_type="copy_check"):
 
-    c_qc = calibration_circuit(type=type, n_steps=N, time=time)
+    c_qc = get_calibration_circuit(type=type, n_steps=N, time=time)
 
     qubits = [1, 3, 5] + q_anc
     N_qubits = len(qubits)
