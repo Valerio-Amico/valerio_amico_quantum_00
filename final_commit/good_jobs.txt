@@ -62,3 +62,14 @@ id_tomo = 624f2d62a5d4ee96e077d190
 id_cal_identity = 624f2d65d720332a5a67dca5
 id_cal_itself = 624f2d684b515263ee7c6f6a
 id_cal_qiskit = 624f2d6ad720331df067dca6
+
+10)
+n_steps=51
+time=np.pi
+evo_type="column_evolution" 
+
+11)
+n_steps=99
+time=np.pi
+evo_type="column_evolution" 
+
