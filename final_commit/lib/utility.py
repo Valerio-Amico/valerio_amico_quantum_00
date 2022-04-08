@@ -10,7 +10,6 @@ from qiskit.quantum_info import state_fidelity
 def fixed_magnetization_two_qubit_gate(phase1,phase2,ry_arg):
     ''' 
     '''
-
     qr=QuantumRegister(2)
     M_qc=QuantumCircuit(qr, name="M")
 
@@ -28,7 +27,7 @@ def get_gates_parameters(U, initial_state={"110": 1.0}):
     """Finds the parameters of the gates based on the system of equations
     defined by the numerical evolution matrix.
 
-    Since the evolution is trivial in the magnetization 0 and 3 
+    Since the evolution is trivial in the magnetization 0 and 3 subspaces
     the procedure is done only for mag==1 and mag==2
     
     Args
@@ -36,7 +35,7 @@ def get_gates_parameters(U, initial_state={"110": 1.0}):
         U : np.ndarray
             the trotterized evolution matrix
         initial_state : dict
-            the initial state to be evolved
+            the initial state to be evolved in format {"state": amplitude}
     """
 
     # Builds up the array associated to the initial state
@@ -59,7 +58,8 @@ def get_gates_parameters(U, initial_state={"110": 1.0}):
     if magnetization == 2:
         # Checks if all the components are in the mag==2 subspace
         if np.arange(8)[state != 0] != [3,5,6]:
-            raise RuntimeError("Something went wrong! State has wrong components")
+            raise RuntimeError("Something went wrong! State has wrong components\n"+
+                                f"mag = {magnetization}, state = {state}")
 
         r1 = 0.5*(np.angle(alpha) + np.angle(gamma))
         r2 = 0
@@ -73,7 +73,8 @@ def get_gates_parameters(U, initial_state={"110": 1.0}):
     elif magnetization == 1:
         # Checks if all the components are in the mag==1 subspace
         if np.arange(8)[state != 0] != [1,2,4]:
-            raise RuntimeError("Something went wrong! State has wrong components")
+            raise RuntimeError("Something went wrong! State has wrong components"+
+                                f"mag = {magnetization}, state = {state}")
 
         r1 = 0.5*(-np.angle(alpha) - np.angle(gamma))
         r2 = 0
