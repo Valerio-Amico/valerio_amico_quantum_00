@@ -74,8 +74,8 @@ def get_gates_parameters(U, initial_state={"110": 1.0}):
         r1 = 0.5 * (np.angle(alpha) + np.angle(gamma))
         r2 = 0
 
-        f1 = 0.5 * (np.angle(gamma) + np.angle(beta) - np.pi)
-        f2 = 0.5 * (np.angle(gamma) - np.angle(alpha)) - f1
+        f1 = 0.5 * (np.angle(gamma) - np.angle(beta) - np.pi)
+        f2 = 0.5 * (np.angle(beta) - np.angle(alpha) + np.pi)
 
         a1 = np.arccos(np.abs(gamma))
         a2 = np.arccos(np.abs(beta) / np.sin(a1))
@@ -150,7 +150,7 @@ def DecimalToBinary(num, number_of_qubits):
 
 def bin_list(N_qubits):
     """Generates the list of strings of all binary numbers"""
-    return [DecimalToBinary(n, N_qubits) for n in range(N_qubits)]
+    return [DecimalToBinary(n, N_qubits) for n in range(2**N_qubits)]
 
 def Toffoli_gate():
     """Builds a modified Toffoli gate adapted to Jakarta geometry"""
