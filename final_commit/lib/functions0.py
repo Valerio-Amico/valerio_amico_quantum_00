@@ -6,49 +6,15 @@ from sympy import Matrix
 from sympy.physics.quantum import TensorProduct as Tp
 from qiskit import (
     Aer,
-    assemble,
     QuantumCircuit,
     QuantumRegister,
     ClassicalRegister,
-    IBMQ,
-    transpile,
     execute,
 )
 from qiskit.ignis.verification.tomography import (
-    state_tomography_circuits,
     StateTomographyFitter,
 )
 from qiskit.quantum_info import state_fidelity
-
-
-def trotter_step_matrix(parameter):
-
-    """
-    Here is computed the matrix of a single trotter step. It can be done numerically or symbolcally.
-
-    Args:
-
-        - parameter: can be a sympy Symbol or a double.
-
-    Returns:
-
-        - trotter_step_matrix: single trotter steps matrix (symbolic or numeric) with parameter=time/N_steps.
-
-    """
-
-    X = Matrix([[0, 1], [1, 0]])  # defining the pauli matrices
-    Y = Matrix([[0, -sympy.I], [sympy.I, 0]])
-    Z = Matrix([[1, 0], [0, -1]])
-    Id = eye(2)
-
-    H1 = Tp(X, X, Id) + Tp(Y, Y, Id) + Tp(Z, Z, Id)
-    H2 = Tp(Id, X, X) + Tp(Id, Y, Y) + Tp(Id, Z, Z)
-
-    trotter_step_matrix_ = exp(-parameter * H1 * sympy.I) * exp(
-        -parameter * H2 * sympy.I
-    )
-
-    return trotter_step_matrix_
 
 
 def symmetry_check(type="copy_check"):
