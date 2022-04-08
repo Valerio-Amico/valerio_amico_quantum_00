@@ -381,10 +381,7 @@ def get_calibration_circuit(type="", n_steps=0, time=np.pi):
         qc.barrier()
         qc.sx(qr[1])
         qc.x(qr[2])
-
-        with open("column_evolution_remake.qasm", "w") as outfile:
-            outfile.write(qc.qasm())
-
+        
         return qc
 
     if type == "column_evolution":
