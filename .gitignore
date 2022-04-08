@@ -7,10 +7,10 @@
 
 # System generated files
 .DS_store
-.vscode
+.vscode/
 
 # Code coverage useless files
-*.coverage[cod]
+*.coverage
 
 # Ignore directory
 /ignored_files
