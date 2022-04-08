@@ -95,32 +95,6 @@ def symmetry_check(type="copy_check"):
 
     return qc_ch
 
-
-def build_circuit(circuit_list, number_of_qubits, name=None):
-    """Builds a circuit described by a list of tuples of gates and qubits index
-
-    The circuit_list must be given in format:
-
-    [["gate_1", [qubits_args] ], ["gate_2", [qubits_args]] ]
-
-    where qubits_args is
-        [int, int]      for control gates
-        [int]           for single qubit gates
-        [float, int]    for single qubit gates with parameter
-    """
-    register = QuantumRegister(number_of_qubits)
-    circuit = QuantumCircuit(register, name=name)
-    for element in circuit_list:
-        gate_name, qubits = element
-        qubits = [
-            register[qubit_index] if isinstance(qubit_index, int) else qubit_index
-            for qubit_index in qubits
-        ]
-        gate = getattr(circuit, gate_name)
-        gate(*qubits)
-    return circuit
-
-
 def add_symmetry_check(qc, qr_control_qubits, qr_ancillas, type="copy_check"):
 
     """
@@ -381,7 +355,7 @@ def get_calibration_circuit(type="", n_steps=0, time=np.pi):
         qc.barrier()
         qc.sx(qr[1])
         qc.x(qr[2])
-        
+
         return qc
 
     if type == "column_evolution":

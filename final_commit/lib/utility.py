@@ -3,23 +3,21 @@ from copy import deepcopy
 from sympy import *
 from qiskit import (
     Aer,
-    assemble,
     QuantumCircuit,
     QuantumRegister,
     ClassicalRegister,
-    IBMQ,
-    transpile,
     execute,
 )
 from qiskit.ignis.verification.tomography import (
     state_tomography_circuits,
-    StateTomographyFitter,
 )
-from qiskit.quantum_info import state_fidelity
 
+# Loads the Jakarta-adapted Toffoli gate
+Toffoli_gate = QuantumCircuit.from_qasm_file("Toffoli.qasm", 
+                                             name="Toffoli")
 
 def fixed_magnetization_two_qubit_gate(phase1, phase2, ry_arg):
-    """ """
+    """Assembles the two-qubit gates that decompose the evolution matrix."""
     qr = QuantumRegister(2)
     M_qc = QuantumCircuit(qr, name="M")
 
@@ -152,7 +150,7 @@ def bin_list(N_qubits):
     """Generates the list of strings of all binary numbers"""
     return [DecimalToBinary(n, N_qubits) for n in range(2**N_qubits)]
 
-def Toffoli_gate():
+def Toffoli_gate_func():
     """Builds a modified Toffoli gate adapted to Jakarta geometry"""
     qr = QuantumRegister(3, name="q")
     qc = QuantumCircuit(qr, name="Toffoli")
