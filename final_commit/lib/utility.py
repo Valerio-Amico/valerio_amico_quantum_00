@@ -59,14 +59,11 @@ def get_gates_parameters(U, initial_state={"110": 1.0}):
         if sum([int(_) for _ in base_vector]) != magnetization:
             raise ValueError("States must have the same magnetization!")
         state[int(base_vector, 2)] = initial_state[base_vector]
-    print(
-        f"get_gates_parameters() - the initial vector vector is {state} (mag = {magnetization})"
-    )
 
     # Sends an (a, b, c) state of fixed magnetization
     # into a (alpha, beta, gamma) state of the same mag
     state = U.dot(state)
-    print(f"get_gates_parameters() - U*initial_state is \n{state}")
+    # print(f"get_gates_parameters() - U*initial_state is \n{state}")
 
     # Now takes the relevant components and solves the associated system of eqs.
     if magnetization == 2:

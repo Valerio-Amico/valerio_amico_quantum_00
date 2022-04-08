@@ -20,8 +20,6 @@ from qiskit.ignis.verification.tomography import (
 )
 from qiskit.quantum_info import state_fidelity
 
-# funzioni verificate
-
 
 def trotter_step_matrix(parameter):
 
@@ -56,7 +54,7 @@ def trotter_step_matrix(parameter):
 def symmetry_check(type="copy_check"):
 
     """
-    this function appends a "copy check" with 3 or four qubits to the cirquit given.
+    this function appends a "copy check" with 3 or four qubits to the circuit given.
     see the file "Ancillas_Error_mitigation_Git_Hub.ipynb" to understand better how does them work.
 
     Args:
@@ -126,7 +124,7 @@ def build_circuit(circuit_list, number_of_qubits, name=None):
 def add_symmetry_check(qc, qr_control_qubits, qr_ancillas, type="copy_check"):
 
     """
-    this function appends a "copy check" with 3 or four qubits to the cirquit given.
+    this function appends a "copy check" with 3 or four qubits to the circuit given.
     see the file "Ancillas_Error_mitigation_Git_Hub.ipynb" to understand better how does them work.
 
     Args:
@@ -178,13 +176,13 @@ def add_symmetry_check(qc, qr_control_qubits, qr_ancillas, type="copy_check"):
 # funzioni quasi verificate
 
 
-def evolution_cirquit_single_state(
+def evolution_circuit_single_state(
     time=np.pi, n_steps=42, initial_state={"110": 1}, precision=40
 ):
 
     """
     This function computes numerically the operator obtained with the composition of "n_steps" trotter steps,
-    and than builds the evolution cirquit with the best decomposition (4 c-not),
+    and than builds the evolution circuit with the best decomposition (4 c-not),
     with a evolution time equals to "time" (see "decomposition.ipynb").
 
     Args:
@@ -196,7 +194,7 @@ def evolution_cirquit_single_state(
 
     Returns:
 
-        - qc (QuantumCirquit): evolution circuit.
+        - qc (Quantumcircuit): evolution circuit.
 
     """
 
@@ -218,11 +216,11 @@ def evolution_cirquit_single_state(
     M1_qc = fixed_magnetization_two_qubit_gate(phase_1_1, phase_2_1, a1)
     M2_qc = fixed_magnetization_two_qubit_gate(phase_2_1, phase_2_2, a2)
 
-    # defining and building the quantum cirquit.
+    # defining and building the quantum circuit.
     qr = QuantumRegister(7, name="q")
     qc = QuantumCircuit(qr, name="U")
 
-    # initializing the state as choosen in "initial_state".
+    # initializing the state as chosen in "initial_state".
     initial_state = "110"
 
     l = 0
@@ -237,9 +235,11 @@ def evolution_cirquit_single_state(
     return qr, qc
 
 
-def calibration_cirquit(type="", n_steps=0, time=np.pi):
+def calibration_circuit(type="", n_steps=0, time=np.pi):
+    """Generates the calibration cricuit for the given calibration procedure."""
 
-    if type == "itself":
+    # THis part literally bulds the circuit again, it' unnecessary
+    """if type == "itself":
         initial_state = "110"
         precision = 45
 
@@ -270,7 +270,7 @@ def calibration_cirquit(type="", n_steps=0, time=np.pi):
 
         qc3 = transpile(qc3, basis_gates=["cx", "rz", "x", "sx"])
 
-        return qc3
+        return qc3"""
 
     if type == "complete_evolution":
         # circuito calibrazione per 14-cnot
@@ -452,11 +452,14 @@ def calibration_cirquit(type="", n_steps=0, time=np.pi):
     return "error"
 
 
-def calibration_cirquits(
-    type="", q_anc=[], N=0, time=np.pi, check="no", check_type="copy_check"
-):
+def calibration_circuits(type="", 
+                        q_anc=[], 
+                        N=0, 
+                        time=np.pi, 
+                        check="no", 
+                        check_type="copy_check"):
 
-    c_qc = calibration_cirquit(type=type, n_steps=N, time=time)
+    c_qc = calibration_circuit(type=type, n_steps=N, time=time)
 
     qubits = [1, 3, 5] + q_anc
     N_qubits = len(qubits)
@@ -667,7 +670,7 @@ def circuits_without_ancillas_measuraments(job):
 
 
 # funzioni da verificare
-def matrix_from_cirquit(qc, phase=0, type="sympy"):
+def matrix_from_circuit(qc, phase=0, type="sympy"):
 
     backend = Aer.get_backend("unitary_simulator")
     job = execute(qc, backend, shots=32000)
