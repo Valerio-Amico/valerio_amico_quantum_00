@@ -24,28 +24,47 @@ def fixed_magnetization_two_qubit_gate(phase1,phase2,ry_arg):
 
     return M_qc
 
-def get_gates_parameters(initial_state={"011": 0.2, "110": 0.1, "101": 0.95}, U):
+def get_gates_parameters(U, initial_state={"110": 1.0}):
+    """Finds the parameters of the gates based on the system of equations
+    defined by the numerical evolution matrix.
+    
+    Args
+    ----
+        U : np.ndarray
+            the trotterized evolution matrix
+        initial_state : dict
+            the initial state to be evolved
+    """
 
     # Builds up the array associated to the initial state
     state = np.zeros(8)
-    magnetization = sum(map(int, initial_state.keys()[0]))
+    
+    # Creates the 8-dimensional vector associated to the state
+    # checking that it is in a magnetization eigenspace
+    magnetization = sum([int(_) for _ in initial_state.keys()[0]])
     for base_vector, amplitude in initial_state:
-        if map(sum(base_vector)) != magnetization:
+        if sum([int(_) for _ in base_vector]) != magnetization:
             raise ValueError("States must have the same magnetization!")
         state[int(base_vector, 2)] = amplitude
-    print(f"the vector is {state}")
+    print(f"get_gates_parameters() - the vector is {state}")
+
+    state = U.dot(state)
 
     if magnetization == 2:
-        A0 = U[3*8+column]
-        A1 = U[5*8+column]
-        A2 = U[6*8+column]
+        # Checks if all the components are in the mag==2 subspace
+        if np.arange(8)[state != 0] != [3,5,6]:
+            raise RuntimeError("Something went wrong! State has wrong components")
 
-        r1=float(atan2(im(A0),re(A0))+atan2(im(A2),re(A2)))/2
-        r2=0
-        f1=float(atan2(im(A2),re(A2))-atan2(im(A1),re(A1))-np.pi)/2
-        f2=float((atan2(im(A2),re(A2))-atan2(im(A0),re(A0)))/2-f1)
-        a1=float(acos(abs(A2)))
-        a2=float(acos(abs(A1)/sin(a1)))
+        alpha_prime, beta_prime, gamma_prime = state[state != 0.0]
+
+        r1 = 0.5*(np.angle(alpha_prime) + np.angle(gamma_prime))
+        r2 = 0
+
+        f1 = 0.5*(np.angle(gamma_prime) + np.angle(beta_prime) - np.pi)
+        f2 = 0.5*(np.angle(gamma_prime) - np.angle(alpha_prime)) - f1
+
+        a1 = np.arccos(np.abs(gamma_prime))
+        a2 = np.arccos(np.abs(beta_prime)/np.sin(a1))
 
     else: 
         if magnetization == 1:
@@ -117,22 +136,6 @@ def cx_01():     # c-not(0,1) gate matrix
         [0,1,0,0]
     ])
 
-def angolo(x): ## QUESTA FUNZIONE NON SERVE A NIENTE!!!!! usare atan2 di sympy.
-    alpha=re(x)
-    beta=im(x)
-    if alpha>0:
-        return atan(beta/alpha)  
-    if alpha<0:
-        if beta>=0:
-            return atan(beta/alpha)+np.pi
-        else:
-            return atan(beta/alpha)-np.pi
-    if alpha==0:
-        if beta>0:
-            return np.pi/2
-        else:
-            return -np.pi/2
-    return 0
 
 def bin_list(N_qubit):
     r=[]
@@ -140,32 +143,11 @@ def bin_list(N_qubit):
         r.append(DecimalToBinary(i,N_qubit))
     return r
 
-def DecimalToBinary(num, N_bit):
-    b=''
-    if num==0:
-        b='0'
-    while(num>0):
-        b=("% s" % (num%2))+b
-        num=num//2
-    while len(b)<N_bit:
-        b='0'+b
-    return b
-
-def BinaryToDecimal(bin):
-    d=0
-    for i in range(len(bin)):
-        if bin[-1-i]=='1':
-            d+=2**i
-    return d
-
-def Magnetization(bin):
-    p=0
-    for i in range(len(bin)):
-        if bin[i]=='1':
-            p+=1
-    return p
+def DecimalToBinary(num):
+    return bin(num).replace("0b", "")
 
 def Toffoli_gate():
+    """Builds a modified Toffoli gate adapted to Jakarta geometry"""
     qr=QuantumRegister(3, name="q")
     qc=QuantumCircuit(qr, name="Toffoli")
     qc.t([qr[0],qr[1]])

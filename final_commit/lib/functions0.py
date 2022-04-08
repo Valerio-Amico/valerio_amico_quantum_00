@@ -99,18 +99,22 @@ def symmetry_check(type="copy_check"):
 
 
 def build_circuit(circuit_list, number_of_qubits, name=None):
-    """Builds a circuit described by a dictionary of gates and qubits index
+    """Builds a circuit described by a list of tuples of gates and qubits index
 
     The circuit_list must be given in format:
 
-    [["gate_1", [qubits_index] ], ["gate_2", [qubits_index]] ]
+    [["gate_1", [qubits_args] ], ["gate_2", [qubits_args]] ]
 
+    where qubits_args is 
+        [int, int]      for control gates
+        [int]           for single qubit gates
+        [float, int]    for single qubit gates with parameter
     """
-    register = QuantumRegister(number_of_qubits, name=name + "_register")
+    register = QuantumRegister(number_of_qubits)
     circuit = QuantumCircuit(register, name=name)
     for element in circuit_list:
         gate_name, qubits = element
-        qubits = [circuit(qubit_index) for qubit_index in qubits]
+        qubits = [register[qubit_index] if isinstance(qubit_index, int) else qubit_index for qubit_index in qubits]
         gate = getattr(circuit, gate_name)
         gate(*qubits)
     return circuit
