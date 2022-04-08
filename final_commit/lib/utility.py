@@ -17,7 +17,7 @@ from qiskit.ignis.verification.tomography import (
 )
 from qiskit.quantum_info import state_fidelity
 
-
+Toffoli_gate = QuantumCircuit.from_qasm_file("Toffoli.qasm")
 def fixed_magnetization_two_qubit_gate(phase1, phase2, ry_arg):
     """ """
     qr = QuantumRegister(2)
@@ -152,7 +152,7 @@ def bin_list(N_qubits):
     """Generates the list of strings of all binary numbers"""
     return [DecimalToBinary(n, N_qubits) for n in range(2**N_qubits)]
 
-def Toffoli_gate():
+def Toffoli_gate_func():
     """Builds a modified Toffoli gate adapted to Jakarta geometry"""
     qr = QuantumRegister(3, name="q")
     qc = QuantumCircuit(qr, name="Toffoli")
@@ -185,7 +185,7 @@ def occurrences_to_matrix(occurrences_list):
         occurrences_list (list) : the list of dicts returned by BaseJob.results.get_counts() 
     """
     counts_matrix = np.zeros((8,8))
-    print(f"occ_list is {occurrences_list}")
+    print(f"occ_list len is{len(occurrences_list)}")
     for i, counts in enumerate(occurrences_list):
         for state in counts:
             print(f"prepared {i} arrived at {int(state, 2)}")
