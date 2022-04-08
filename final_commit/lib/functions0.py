@@ -220,7 +220,7 @@ def evolution_circuit_single_state(
     qr = QuantumRegister(7, name="q")
     qc = QuantumCircuit(qr, name="U")
 
-    # initializing the state as choosen in "initial_state".
+    # initializing the state as chosen in "initial_state".
     initial_state = "110"
 
     l = 0
@@ -236,8 +236,10 @@ def evolution_circuit_single_state(
 
 
 def calibration_circuit(type="", n_steps=0, time=np.pi):
+    """Generates the calibration cricuit for the given calibration procedure."""
 
-    if type == "itself":
+    # THis part literally bulds the circuit again, it' unnecessary
+    """if type == "itself":
         initial_state = "110"
         precision = 45
 
@@ -268,7 +270,7 @@ def calibration_circuit(type="", n_steps=0, time=np.pi):
 
         qc3 = transpile(qc3, basis_gates=["cx", "rz", "x", "sx"])
 
-        return qc3
+        return qc3"""
 
     if type == "complete_evolution":
         # circuito calibrazione per 14-cnot
@@ -450,9 +452,12 @@ def calibration_circuit(type="", n_steps=0, time=np.pi):
     return "error"
 
 
-def calibration_circuits(
-    type="", q_anc=[], N=0, time=np.pi, check="no", check_type="copy_check"
-):
+def calibration_circuits(type="", 
+                        q_anc=[], 
+                        N=0, 
+                        time=np.pi, 
+                        check="no", 
+                        check_type="copy_check"):
 
     c_qc = calibration_circuit(type=type, n_steps=N, time=time)
 
