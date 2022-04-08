@@ -42,23 +42,21 @@ def get_gates_parameters(U, initial_state={"110": 1.0}):
     
     # Creates the 8-dimensional vector associated to the state
     # checking that it is in a magnetization eigenspace
-    magnetization = sum([int(_) for _ in initial_state.keys()[0]])
-    for base_vector, amplitude in initial_state:
+    magnetization = sum([int(_) for _ in list(initial_state.keys())[0]])
+    for base_vector in initial_state:
         if sum([int(_) for _ in base_vector]) != magnetization:
             raise ValueError("States must have the same magnetization!")
-        state[int(base_vector, 2)] = amplitude
+        state[int(base_vector, 2)] = initial_state[base_vector]
     print(f"get_gates_parameters() - the vector is {state}")
 
     # Sends an (a, b, c) state of fixed magnetization 
     # into a (alpha, beta, gamma) state of the same mag
     state = U.dot(state)
-    alpha, beta, gamma = state[state != 0.0]
 
     if magnetization == 2:
-        # Checks if all the components are in the mag==2 subspace
-        if np.arange(8)[state != 0] != [3,5,6]:
-            raise RuntimeError("Something went wrong! State has wrong components\n"+
-                                f"mag = {magnetization}, state = {state}")
+
+        subspace_coords = np.array([3,5,6])
+        alpha, beta, gamma = state[subspace_coords]
 
         r1 = 0.5*(np.angle(alpha) + np.angle(gamma))
         r2 = 0
@@ -70,10 +68,9 @@ def get_gates_parameters(U, initial_state={"110": 1.0}):
         a2 = np.arccos(np.abs(beta)/np.sin(a1))
 
     elif magnetization == 1:
-        # Checks if all the components are in the mag==1 subspace
-        if np.arange(8)[state != 0] != [1,2,4]:
-            raise RuntimeError("Something went wrong! State has wrong components"+
-                                f"mag = {magnetization}, state = {state}")
+        
+        subspace_coords = np.array([3,5,6])
+        alpha, beta, gamma = state[subspace_coords]
 
         r1 = 0.5*(-np.angle(alpha) - np.angle(gamma))
         r2 = 0
