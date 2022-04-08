@@ -3,23 +3,21 @@ from copy import deepcopy
 from sympy import *
 from qiskit import (
     Aer,
-    assemble,
     QuantumCircuit,
     QuantumRegister,
     ClassicalRegister,
-    IBMQ,
-    transpile,
     execute,
 )
 from qiskit.ignis.verification.tomography import (
     state_tomography_circuits,
-    StateTomographyFitter,
 )
-from qiskit.quantum_info import state_fidelity
 
-Toffoli_gate = QuantumCircuit.from_qasm_file("Toffoli.qasm")
+# Loads the Jakarta-adapted Toffoli gate
+Toffoli_gate = QuantumCircuit.from_qasm_file("Toffoli.qasm", 
+                                             name="Toffoli")
+
 def fixed_magnetization_two_qubit_gate(phase1, phase2, ry_arg):
-    """ """
+    """Assembles the two-qubit gates that decompose the evolution matrix."""
     qr = QuantumRegister(2)
     M_qc = QuantumCircuit(qr, name="M")
 
