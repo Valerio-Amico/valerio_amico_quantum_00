@@ -185,6 +185,7 @@ def occurrences_to_matrix(occurrences_list):
         occurrences_list (list) : the list of dicts returned by BaseJob.results.get_counts() 
     """
     counts_matrix = np.zeros((8,8))
+    print(f"occ_list is {occurrences_list}")
     for i, counts in enumerate(occurrences_list):
         for state in counts:
             print(f"prepared {i} arrived at {int(state, 2)}")
