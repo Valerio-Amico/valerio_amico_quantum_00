@@ -9,7 +9,10 @@
 .DS_store
 .vscode
 
+# Code coverage useless files
+*.coverage[cod]
+
 # Ignore directory
-# /ignored_files
+/ignored_files
 
 ciao.txt
