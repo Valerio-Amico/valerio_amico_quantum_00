@@ -178,6 +178,8 @@ def Toffoli_gate():
 
 def occurrences_to_matrix(occurrences_list):
     """Converts the occurrences dict to matrix.
+
+    Each column of the matrix is the array of counts for all final state.
     
     Args:
         occurrences_list (list) : the list of dicts returned by BaseJob.results.get_counts() 
@@ -188,4 +190,4 @@ def occurrences_to_matrix(occurrences_list):
             counts_matrix[int(state, 2), i] = counts[state]
         print(f"Column sum is {np.sum(counts_matrix[:,i])}")
         counts_matrix[:,i] /= np.sum(counts_matrix[:,i])
-    return 
+    return counts_matrix
