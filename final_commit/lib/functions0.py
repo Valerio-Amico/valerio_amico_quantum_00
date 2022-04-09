@@ -21,15 +21,16 @@ Y = np.array([[0,-1j],[1j,0]])
 Z = np.array([[1,0],[0,-1]])
 Id = np.eye(2)
 
-# Loads the Jakarta-adapted Toffoli gate
-dirname = os.path.dirname(__file__)
-Toffoli_gate = QuantumCircuit.from_qasm_file(os.path.join(dirname, "Toffoli.qasm"))
-
 # defining the hamiltonian divided in: 
 #       - H1: first two qubits interactions.
 #       - H2: second two qubits interactions.
 H1 = np.kron(X, np.kron(X,Id)) + np.kron(Y, np.kron(Y,Id)) + np.kron(Z, np.kron(Z,Id)) 
 H2 = np.kron(Id, np.kron(X,X)) + np.kron(Id, np.kron(Y,Y)) + np.kron(Id, np.kron(Z,Z)) 
+
+# Loads the Jakarta-adapted Toffoli gate
+dirname = os.path.dirname(__file__)
+Toffoli_gate = QuantumCircuit.from_qasm_file(os.path.join(dirname, "Toffoli.qasm"))
+
 
 def trotter_step_matrix(time, n_steps):
     """Computes numerically the trotter step"""

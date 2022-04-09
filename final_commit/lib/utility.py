@@ -12,8 +12,6 @@ from qiskit.ignis.verification.tomography import (
     state_tomography_circuits,
 )
 
-# Loads the Jakarta-adapted Toffoli gate
-Toffoli_gate = QuantumCircuit.from_qasm_file("lib/Toffoli.qasm")
 
 def fixed_magnetization_two_qubit_gate(phase1, phase2, ry_arg):
     """Assembles the two-qubit gates that decompose the evolution matrix."""
