@@ -195,5 +195,4 @@ def occurrences_to_vector(occurrences_dict):
     counts_vector = np.zeros(8)
     for i, state in enumerate(occurrences_dict):
         counts_vector[i] = occurrences_dict[state]
-        
     return counts_vector
