@@ -14,11 +14,16 @@ from qiskit import (
 from qiskit.ignis.verification.tomography import StateTomographyFitter
 from qiskit.quantum_info import state_fidelity
 from scipy.linalg import expm
+import os
 
 X = np.array([[0,1],[1,0]])  #defining the pauli matrices
 Y = np.array([[0,-1j],[1j,0]])
 Z = np.array([[1,0],[0,-1]])
 Id = np.eye(2)
+
+# Loads the Jakarta-adapted Toffoli gate
+dirname = os.path.dirname(__file__)
+Toffoli_gate = QuantumCircuit.from_qasm_file(os.path.join(dirname, "Toffoli.qasm"))
 
 # defining the hamiltonian divided in: 
 #       - H1: first two qubits interactions.
