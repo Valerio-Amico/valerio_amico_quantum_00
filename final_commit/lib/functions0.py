@@ -15,7 +15,27 @@ from qiskit.ignis.verification.tomography import (
     StateTomographyFitter,
 )
 from qiskit.quantum_info import state_fidelity
+from scipy.linalg import expm
 
+X = np.array([[0,1],[1,0]])  #defining the pauli matrices
+Y = np.array([[0,-1j],[1j,0]])
+Z = np.array([[1,0],[0,-1]])
+Id = np.eye(2)
+
+# defining the hamiltonian divided in: 
+#       - H1: first two qubits interactions.
+#       - H2: second two qubits interactions.
+
+H1 = np.kron(X, np.kron(X,Id)) + np.kron(Y, np.kron(Y,Id)) + np.kron(Z, np.kron(Z,Id)) 
+H2 = np.kron(Id, np.kron(X,X)) + np.kron(Id, np.kron(Y,Y)) + np.kron(Id, np.kron(Z,Z)) 
+
+# Building numerically the trotter step matrix, and the whole operator (trotter step)^n_steps
+
+def trotter_step_matrix(time, n_steps):
+    return expm(-time/n_steps*H1*1j).dot(expm(-time/n_steps*H2*1j))
+
+def trotterized_matrix(time, n_steps):
+    return np.linalg.matrix_power(trotter_step_matrix(time, n_steps), n_steps)
 
 def symmetry_check(type="copy_check"):
 
