@@ -13,6 +13,7 @@ from qiskit.quantum_info import state_fidelity
 import matplotlib.pyplot as plt
 from qiskit.opflow import Zero, One, I, X, Y, Z
 import warnings
+from tqdm import trange
 warnings.filterwarnings('ignore')
 IBMQ.load_account()
 provider = IBMQ.get_provider(hub='ibm-q-community',
@@ -27,30 +28,30 @@ backend_sim = Aer.get_backend('qasm_simulator')
 import qiskit
 qiskit.utils.mitigation.fitters.__file__
 
-Passi=1
+Passi=50
 F_raw=np.zeros(Passi)
 F_Qiskit=np.zeros(Passi)
 F_Identity=np.zeros(Passi)
 F_circuit=np.zeros(Passi)
 
-for m in range(Passi): # %%
+for m in trange(Passi): # %%
     n_steps=100
     time=np.pi*(m+0.0001)/Passi
     #initial_state={"110": 1}
     shots = 8192
     backend = backend_sim_jakarta
 
-    X = np.array([[0,1],[1,0]])  #defining the pauli matrices
-    Y = np.array([[0,-1j],[1j,0]])
-    Z = np.array([[1,0],[0,-1]])
+    X_ = np.array([[0,1],[1,0]])  #defining the pauli matrices
+    Y_ = np.array([[0,-1j],[1j,0]])
+    Z_ = np.array([[1,0],[0,-1]])
     Id = np.eye(2)
 
     # defining the hamiltonian divided in: 
     #       - H1: first two qubits interactions.
     #       - H2: second two qubits interactions.
 
-    H1 = np.kron(X, np.kron(X,Id)) + np.kron(Y, np.kron(Y,Id)) + np.kron(Z, np.kron(Z,Id)) 
-    H2 = np.kron(Id, np.kron(X,X)) + np.kron(Id, np.kron(Y,Y)) + np.kron(Id, np.kron(Z,Z)) 
+    H1 = np.kron(X_, np.kron(X_,Id)) + np.kron(Y_, np.kron(Y_,Id)) + np.kron(Z_, np.kron(Z_,Id)) 
+    H2 = np.kron(Id, np.kron(X_,X_)) + np.kron(Id, np.kron(Y_,Y_)) + np.kron(Id, np.kron(Z_,Z_)) 
 
     # building numerically the trotter step matrix, and the whole operator (trotter step)^n_steps.
 
@@ -82,10 +83,8 @@ for m in range(Passi): # %%
     B_qc.append(Toffoli_gate,[qr[0],qr[1],qr[2]])
     B_qc.x([qr[0],qr[1]])
 
-    B_qc.draw(output="mpl")
 
     # %%
-    transpile(B_qc, basis_gates=["cx", "x", "rz", "sx"]).draw(output="mpl")
 
     # %%
     n_steps = 42
@@ -108,7 +107,6 @@ for m in range(Passi): # %%
     qc.unitary(M_N,[0,1])    
     M_N_qc=transpile(qc,basis_gates=['cx','x','sx','rz']) 
 
-    M_N_qc.draw(output="mpl")
 
     # %%
     initial_state="000"
@@ -129,7 +127,6 @@ for m in range(Passi): # %%
     qc_U.append(M_N_qc,[qr[0],qr[1]])
     qc_U.append(B_qc,[qr[0],qr[1],qr[2]])
 
-    qc_U.draw(output="mpl")
 
     # %%
     U_ideal=matrix_from_circuit(qc_U, type="numpy")
@@ -143,14 +140,12 @@ for m in range(Passi): # %%
     qc_evo.append(qc_U, qr_evo)
 
     qcs_tomo = state_tomography_circuits(qc_evo, qr_evo)
-    qcs_tomo[3].draw(output="mpl")
 
     # %%
     qr_cal = QuantumRegister(3)
     cal_circ, state_labels = complete_meas_cal(qubit_list=[0,1,2], qr=qr_cal, circlabel='mcal')
 
     # %%
-    cal_circ[0].draw()
 
     # %%
     state_labels
@@ -187,10 +182,8 @@ for m in range(Passi): # %%
         calib_circuits_itself.append(qc_cal_itself)
 
     # %%
-    calib_circuits_identity[1].draw()
 
     # %%
-    calib_circuits_itself[1].draw()
 
     # %%
     job_tomo=execute(qcs_tomo, backend, shots=shots, initial_layout=[1,3,5])
@@ -237,7 +230,6 @@ for m in range(Passi): # %%
 
     qcs_basis[0].remove_final_measurements()
 
-    qcs_basis[16].draw()
 
     # %%
     meas_fitter_qiskit.cal_matrix
@@ -316,18 +308,12 @@ for m in range(Passi): # %%
     identity_res.get_counts(-1)
 
     # %%
-    fids[0] = fidelity_count(raw_res, qcs_tomo, target_state)
-    fids[1] = fidelity_count(qiskit_res, qcs_tomo, target_state)
-    fids[2] = fidelity_count(identity_res, qcs_tomo, target_state)
-    fids[3] = fidelity_count(itself_res, qcs_tomo, target_state)
-    F_raw[m]=fids[0]
-    F_Qiskit[m]=fids[1]
-    F_Identity[m]=fids[2]
-    F_circuit[m]=fids[3]
+
+    F_raw[m]=fidelity_count(raw_res, qcs_tomo, target_state)
+    F_Qiskit[m]=fidelity_count(qiskit_res, qcs_tomo, target_state)
+    F_Identity[m]=fidelity_count(identity_res, qcs_tomo, target_state)
+    F_circuit[m]=fidelity_count(itself_res, qcs_tomo, target_state)
     print(m)
-
-
-
 
 
 def H_heis3():
