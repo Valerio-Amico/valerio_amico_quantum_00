@@ -185,3 +185,15 @@ def occurrences_to_matrix(occurrences_list):
             counts_matrix[int(state, 2), i] = counts[state]
         counts_matrix[:,i] /= np.sum(counts_matrix[:,i])
     return counts_matrix
+
+def occurrences_to_vector(occurrences_dict):
+    """Converts the occurrences dict to vector.
+
+    Args:
+        occurrences_list (list) : the list of dicts returned by BaseJob.results.get_counts() 
+    """
+    counts_vector = np.zeros(8)
+    for i, state in enumerate(occurrences_dict):
+        counts_vector[i] = occurrences_dict[state]
+        
+    return counts_vector
