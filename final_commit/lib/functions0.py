@@ -31,7 +31,6 @@ H2 = np.kron(Id, np.kron(X,X)) + np.kron(Id, np.kron(Y,Y)) + np.kron(Id, np.kron
 dirname = os.path.dirname(__file__)
 Toffoli_gate = QuantumCircuit.from_qasm_file(os.path.join(dirname, "Toffoli.qasm"))
 
-
 def trotter_step_matrix(time, n_steps):
     """Computes numerically the trotter step"""
     return expm(-time/n_steps*H1*1j).dot(expm(-time/n_steps*H2*1j))
