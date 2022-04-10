@@ -632,16 +632,37 @@ def circuits_without_ancillas_measuraments(job):
 
 
 # funzioni da verificare
-def matrix_from_circuit(qc, phase=0, type="sympy"):
+def matrix_from_circuit(qc, simulator = "unitary_simulator", phase=0, type="sympy"):
 
-    backend = Aer.get_backend("unitary_simulator")
+    """
+    Return the matrix of the circuit:
+
+    Args 
+    ----
+
+        - qc (QuantumCircuit): the quantum circuit, without final measuraments, which you wont know the matrix.
+        - simulator (string): the simulator used for the aim:
+                                - "unitary_simulator": you will get the exact unitary matrix of the circuit.
+                                - "aer_simulator": you will get the probability matrices of the circuit in the computational base.
+        - phase (float): global phase
+        - type (string):
+                                - "sympy": will return the sympy matrix
+                                - "numpy": will return a numpy matrix
+    Return
+    -----
+
+        - the matrix of the circuit
+        
+    """
+
+    backend = Aer.get_backend(simulator)
     job = execute(qc, backend, shots=32000)
     result = job.result()
-    A = result.get_unitary(qc, decimals=10) * np.exp(1j * phase)
+    circuit_matrix = result.get_unitary(qc, decimals=40) * np.exp(1j * phase)
     if type == "sympy":
-        return Matrix(A)
+        return Matrix(circuit_matrix)
     else:
-        return A
+        return circuit_matrix
 
 
 def mitigate2(raw_results, ancillas_conditions=[], meas_fitter=None):
