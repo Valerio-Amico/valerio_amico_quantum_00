@@ -10,6 +10,7 @@ matplotlib = "*"
 pylatexenc = "*"
 numpy = "==1.21"
 jupyter = "*"
+array-to-latex = "*"
 
 [dev-packages]
 
