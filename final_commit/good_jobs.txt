@@ -21,3 +21,8 @@ fid = 99.4% (l'ultimo punto, corrispondente a t=pi)
 4)
 check=["4copy_check", [0,2,4,6]], reps=2, steps=88, time_range=np.linspace(0.01,np.pi,15)
 
+5)
+tomo_id = "625067675ab79b0c89f95ef3"
+identity_id = "6250676aa5d4ee508477d9fc"
+itself_id = "6250676bfdf3777ad456ff20"
+qiskit_id = "6250676dcaa265abb0f1a6fe"
