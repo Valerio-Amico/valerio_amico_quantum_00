@@ -1,16 +1,43 @@
 import numpy as np
-from qiskit.quantum_info import state_fidelity
+from .utility import *
+from copy import deepcopy
 from qiskit import (
     Aer,
     QuantumCircuit,
     QuantumRegister,
     ClassicalRegister,
-    execute,
+    execute
 )
-from qiskit.ignis.verification.tomography import (
-    state_tomography_circuits, 
-    StateTomographyFitter,
-)
+from qiskit.ignis.verification.tomography import StateTomographyFitter
+from qiskit.quantum_info import state_fidelity
+from scipy.linalg import expm
+import os
+
+
+# Constant objects used in the calculations
+X = np.array([[0,1],[1,0]]) 
+Y = np.array([[0,-1j],[1j,0]])
+Z = np.array([[1,0],[0,-1]])
+Id = np.eye(2)
+
+# defining the hamiltonian divided in: 
+#       - H1: first two qubits interactions.
+#       - H2: second two qubits interactions.
+H1 = np.kron(X, np.kron(X,Id)) + np.kron(Y, np.kron(Y,Id)) + np.kron(Z, np.kron(Z,Id)) 
+H2 = np.kron(Id, np.kron(X,X)) + np.kron(Id, np.kron(Y,Y)) + np.kron(Id, np.kron(Z,Z)) 
+
+# Loads the Jakarta-adapted Toffoli gate
+dirname = os.path.dirname(__file__)
+Toffoli_gate = QuantumCircuit.from_qasm_file(os.path.join(dirname, "Toffoli.qasm"))
+
+
+def trotter_step_matrix(time, n_steps):
+    """Computes numerically the trotter step"""
+    return expm(-time/n_steps*H1*1j).dot(expm(-time/n_steps*H2*1j))
+
+def trotterized_matrix(time, n_steps):
+    """Computes the trotter_step**n_steps"""
+    return np.linalg.matrix_power(trotter_step_matrix(time, n_steps), n_steps)
 
 def get_gates_parameters(U, initial_state={"110": 1.0}):
     """Finds the parameters of the gates based on the system of equations
@@ -109,18 +136,32 @@ def get_calibration_circuits(qc, method="NIC"):
 
     return calib_circuits
 
-def matrix_from_cirquit(qc, phase=0, output_type="sympy"):
-    '''
-    return the matrix rapresentation of a QuantumCircuit.
-    '''
-    backend = Aer.get_backend('unitary_simulator')
+def matrix_from_circuit(qc, simulator = "unitary_simulator", phase=0):
+
+    """
+    Return the matrix of the circuit:
+
+    Args 
+    ----
+
+        - qc (QuantumCircuit): the quantum circuit, without final measuraments, which you wont know the matrix.
+        - simulator (string): the simulator used for the aim:
+                                - "unitary_simulator": you will get the exact unitary matrix of the circuit.
+                                - "aer_simulator": you will get the probability matrices of the circuit in the computational base.
+        - phase (float): global phase
+
+    Return
+    -----
+
+        - the matrix of the circuit
+        
+    """
+
+    backend = Aer.get_backend(simulator)
     job = execute(qc, backend, shots=32000)
     result = job.result()
-    A=result.get_unitary(qc, decimals=10)*np.exp(1j*phase)
-    if output_type=="sympy":
-        return Matrix(A)
-    else:
-        return A
+    circuit_matrix = result.get_unitary(qc, decimals=40) * np.exp(1j * phase)
+    return circuit_matrix
 
 def fidelity_count(result, qcs, target_state):
     '''
@@ -132,130 +173,6 @@ def fidelity_count(result, qcs, target_state):
     return fid
 
 
-
-
-
-
-
-
-
-
-def fixed_magnetization_two_qubit_gate(phase1, phase2, ry_arg):
-    """Assembles the two-qubit gates that decompose the evolution matrix."""
-    qr = QuantumRegister(2)
-    M_qc = QuantumCircuit(qr, name="M")
-
-    M_qc.rz(2 * phase1, qr[1])
-    M_qc.h(qr[0])
-    M_qc.cx(qr[0], qr[1])
-    M_qc.ry(ry_arg, qr)
-    M_qc.cx(qr[0], qr[1])
-    M_qc.h(qr[0])
-    M_qc.rz(2 * phase2, qr[1])
-
-    return M_qc
-
-def jobs_result(job_evolution, reps=1, ancillas=[]):
-
-    backend_sim = Aer.get_backend("qasm_simulator")
-
-    qr = QuantumRegister(7)
-    qc = QuantumCircuit(qr)
-    qcs = state_tomography_circuits(qc, [qr[1], qr[3], qr[5]])
-    for qc in qcs:
-        cr = ClassicalRegister(len(ancillas))
-        qc.add_register(cr)
-        i = 0
-        for j in ancillas:
-            qc.measure(qr[j], cr[i])
-            i += 1
-
-    jobs_evo_res = []
-    for i in range(reps):
-
-        job = execute(qcs, backend=backend_sim, shots=10)
-        results = job.result()
-
-        for j in range(27):
-            results.results[j].data.counts = job_evolution.result().get_counts()[
-                i * 27 + j
-            ]
-
-        jobs_evo_res.append(results)
-
-    return jobs_evo_res
-
-
-def ry(alpha):  # generic ry gate matrix
-    return Matrix([[cos(alpha / 2), -sin(alpha / 2)], [sin(alpha / 2), cos(alpha / 2)]])
-
-
-def rz(alpha):  # generic rz gate matrix
-    return Matrix([[exp(-1j * (alpha / 2)), 0], [0, exp(1j * (alpha / 2))]])
-
-
-def H():  # hadamard gate matrix
-    return Matrix([[1 / sqrt(2), 1 / sqrt(2)], [1 / sqrt(2), -1 / sqrt(2)]])
-
-
-def cx_01():  # c-not(0,1) gate matrix
-    return Matrix([[1, 0, 0, 0], [0, 0, 0, 1], [0, 0, 1, 0], [0, 1, 0, 0]])
-
-
 def DecimalToBinary(num, number_of_qubits):
     """Converts a decimal to a binary string of length ``number_of_qubits``."""
     return f"{num:b}".zfill(number_of_qubits)
-
-def bin_list(N_qubits):
-    """Generates the list of strings of all binary numbers"""
-    return [DecimalToBinary(n, N_qubits) for n in range(2**N_qubits)]
-
-def Toffoli_gate_func():
-    """Builds a modified Toffoli gate adapted to Jakarta geometry"""
-    qr = QuantumRegister(3, name="q")
-    qc = QuantumCircuit(qr, name="Toffoli")
-    qc.t([qr[0], qr[1]])
-    qc.h(qr[2])
-    qc.t(qr[2])
-    qc.cx(qr[0], qr[1])
-    qc.cx(qr[1], qr[2])
-    qc.tdg(qr[1])
-    qc.t(qr[2])
-    qc.cx(qr[0], qr[1])
-    qc.cx(qr[1], qr[2])
-    qc.cx(qr[0], qr[1])
-    qc.tdg(qr[2])
-    qc.cx(qr[1], qr[2])
-    qc.tdg(qr[2])
-    qc.cx(qr[0], qr[1])
-    qc.cx(qr[1], qr[2])
-    qc.h(qr[2])
-
-    return qc
-
-
-def occurrences_to_matrix(occurrences_list):
-    """Converts the occurrences dict to matrix.
-
-    Each column of the matrix is the array of counts for all final state.
-    
-    Args:
-        occurrences_list (list) : the list of dicts returned by BaseJob.results.get_counts() 
-    """
-    counts_matrix = np.zeros((8,8))
-    for i, counts in enumerate(occurrences_list):
-        for state in counts:
-            counts_matrix[int(state, 2), i] = counts[state]
-        counts_matrix[:,i] /= np.sum(counts_matrix[:,i])
-    return counts_matrix
-
-def occurrences_to_vector(occurrences_dict):
-    """Converts the occurrences dict to vector.
-
-    Args:
-        occurrences_list (list) : the list of dicts returned by BaseJob.results.get_counts() 
-    """
-    counts_vector = np.zeros(8)
-    for i, state in enumerate(occurrences_dict):
-        counts_vector[i] = occurrences_dict[state]
-    return counts_vector
