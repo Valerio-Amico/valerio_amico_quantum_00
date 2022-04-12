@@ -12,23 +12,6 @@ from qiskit.ignis.verification.tomography import (
     state_tomography_circuits,
 )
 
-
-def fixed_magnetization_two_qubit_gate(phase1, phase2, ry_arg):
-    """Assembles the two-qubit gates that decompose the evolution matrix."""
-    qr = QuantumRegister(2)
-    M_qc = QuantumCircuit(qr, name="M")
-
-    M_qc.rz(2 * phase1, qr[1])
-    M_qc.h(qr[0])
-    M_qc.cx(qr[0], qr[1])
-    M_qc.ry(ry_arg, qr)
-    M_qc.cx(qr[0], qr[1])
-    M_qc.h(qr[0])
-    M_qc.rz(2 * phase2, qr[1])
-
-    return M_qc
-
-
 def get_gates_parameters(U, initial_state={"110": 1.0}):
     """Finds the parameters of the gates based on the system of equations
     defined by the numerical evolution matrix.
@@ -91,6 +74,58 @@ def get_gates_parameters(U, initial_state={"110": 1.0}):
 
     return r1, r2, f1, f2, a1, a2
 
+def get_calibration_circuits(qc, method="NIC"):
+    '''
+    Returns a list of calibration circuits for all the methods: CIC, NIC and qiskit calibration matrix.
+
+    Args
+    ----
+        qc (QuantumCircuit): the quantum circuit you wont to calibrate.
+        method (string): the method of calibration. Can be CIC, NIC or qiskit.
+
+    Return
+    ----
+        calib_circuits (list of QuantumCircuit): list of calibration circuits.
+    '''
+
+    calib_circuits = []
+    state_labels = ['000', '001', '010', '011', '100', '101', '110', '111']  
+
+    for state in state_labels:
+        cr_cal = ClassicalRegister(3, name = "c")
+        qr_cal = QuantumRegister(3, name = "q_")
+        qc_cal = QuantumCircuit(qr_cal, cr_cal, name=f"mcalcal_{state}")
+        # first we append the circuit (if method == "NIC").
+        if method == "NIC": qc_cal.append(qc, qr_cal)
+        # than we prepare the state.
+        for qubit in range(3):
+            if state[::-1][qubit] == "1":
+                qc_cal.x(qr_cal[qubit])
+        # then we append the circuit (if method == "CIC").
+        if method == "CIC": qc_cal.append(qc, qr_cal)
+        # measure all
+        qc_cal.measure(qr_cal, cr_cal)
+        calib_circuits.append(qc_cal)
+
+    return calib_circuits
+
+
+
+
+def fixed_magnetization_two_qubit_gate(phase1, phase2, ry_arg):
+    """Assembles the two-qubit gates that decompose the evolution matrix."""
+    qr = QuantumRegister(2)
+    M_qc = QuantumCircuit(qr, name="M")
+
+    M_qc.rz(2 * phase1, qr[1])
+    M_qc.h(qr[0])
+    M_qc.cx(qr[0], qr[1])
+    M_qc.ry(ry_arg, qr)
+    M_qc.cx(qr[0], qr[1])
+    M_qc.h(qr[0])
+    M_qc.rz(2 * phase2, qr[1])
+
+    return M_qc
 
 def jobs_result(job_evolution, reps=1, ancillas=[]):
 
