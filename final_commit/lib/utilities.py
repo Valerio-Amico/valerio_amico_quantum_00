@@ -1,5 +1,4 @@
 import numpy as np
-from .utility import *
 from copy import deepcopy
 from qiskit import (
     Aer,
@@ -20,7 +19,7 @@ Y = np.array([[0,-1j],[1j,0]])
 Z = np.array([[1,0],[0,-1]])
 Id = np.eye(2)
 
-# defining the hamiltonian divided in: 
+# Defining the hamiltonian divided in: 
 #       - H1: first two qubits interactions.
 #       - H2: second two qubits interactions.
 H1 = np.kron(X, np.kron(X,Id)) + np.kron(Y, np.kron(Y,Id)) + np.kron(Z, np.kron(Z,Id)) 
@@ -86,7 +85,7 @@ def get_gates_parameters(U, initial_state={"110": 1.0}):
         a2 = np.arccos(np.abs(beta) / np.sin(a1))
 
     elif magnetization == 1:
-
+        raise NotImplementedError("The magnetization==1 case has not been sufficiently tested")
         subspace_coords = np.array([3, 5, 6])
         alpha, beta, gamma = state[subspace_coords]
 
