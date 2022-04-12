@@ -172,6 +172,8 @@ def fidelity_count(result, qcs, target_state):
     return fid
 
 
+
+
 def DecimalToBinary(num, number_of_qubits):
     """Converts a decimal to a binary string of length ``number_of_qubits``."""
     return f"{num:b}".zfill(number_of_qubits)
