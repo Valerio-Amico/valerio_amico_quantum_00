@@ -1,6 +1,6 @@
 import numpy as np
 from copy import deepcopy
-from sympy import *
+from qiskit.quantum_info import state_fidelity
 from qiskit import (
     Aer,
     QuantumCircuit,
@@ -9,7 +9,8 @@ from qiskit import (
     execute,
 )
 from qiskit.ignis.verification.tomography import (
-    state_tomography_circuits,
+    state_tomography_circuits, 
+    StateTomographyFitter,
 )
 
 def get_gates_parameters(U, initial_state={"110": 1.0}):
@@ -108,6 +109,34 @@ def get_calibration_circuits(qc, method="NIC"):
         calib_circuits.append(qc_cal)
 
     return calib_circuits
+
+def matrix_from_cirquit(qc, phase=0, output_type="sympy"):
+    '''
+    return the matrix rapresentation of a QuantumCircuit.
+    '''
+    backend = Aer.get_backend('unitary_simulator')
+    job = execute(qc, backend, shots=32000)
+    result = job.result()
+    A=result.get_unitary(qc, decimals=10)*np.exp(1j*phase)
+    if output_type=="sympy":
+        return Matrix(A)
+    else:
+        return A
+
+def fidelity_count(result, qcs, target_state):
+    '''
+    given the job result and the targhet state it returns the fidelity
+    '''
+    tomo_ising = StateTomographyFitter(result, qcs)
+    rho_fit_ising = tomo_ising.fit(method="lstsq")
+    fid=state_fidelity(rho_fit_ising, target_state)
+    return fid
+
+
+
+
+
+
 
 
 
