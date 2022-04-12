@@ -138,9 +138,7 @@ def add_symmetry_check(qc, qr_control_qubits, qr_ancillas, type="copy_check"):
 # funzioni quasi verificate
 
 
-def evolution_circuit_single_state(
-    time=np.pi, n_steps=42, initial_state={"110": 1}, precision=40
-):
+def evolution_circuit_single_state(time=np.pi, n_steps=42, initial_state={"110": 1}, precision=40):
 
     """
     This function computes numerically the operator obtained with the composition of "n_steps" trotter steps,
@@ -195,7 +193,6 @@ def evolution_circuit_single_state(
     qc.append(M2_qc, [qr[3], qr[5]])
 
     return qr, qc
-
 
 def get_calibration_circuit(type="", n_steps=0, time=np.pi):
     """Generates the calibration circuit for the given calibration procedure."""
