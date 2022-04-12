@@ -1,5 +1,4 @@
 import numpy as np
-from copy import deepcopy
 from qiskit.quantum_info import state_fidelity
 from qiskit import (
     Aer,
