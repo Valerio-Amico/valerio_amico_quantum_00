@@ -2,4 +2,7 @@
 nella funzione get_evolution_circuit aggiustare il warning
 
 2)
-stato iniziale
+stato iniziale in final commit è definito un po a cazzo
+
+3)
+cambiare il nome al toffoli gate

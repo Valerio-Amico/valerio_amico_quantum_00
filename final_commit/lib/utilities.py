@@ -119,7 +119,6 @@ def get_calibration_circuits(qc, method="NIC", eigenvector=None):
         calib_circuits (list of QuantumCircuit): list of calibration circuits.
     '''
 
-    print("invertire lo stato iniziale se la decomposizione è HSD.")
     calib_circuits = []
     state_labels = ['000', '001', '010', '011', '100', '101', '110', '111']  
 
@@ -194,7 +193,7 @@ def fidelity_count(result, qcs, target_state):
 
 
 
-def get_evolution_circuit(time, n_steps, method="HSD"):
+def get_evolution_circuit(time, n_steps, method="HSD", initial_state={"110": 1}):
     '''
     Returns the evolution circuit with the associated QuantumRegister.
 
@@ -208,10 +207,10 @@ def get_evolution_circuit(time, n_steps, method="HSD"):
     if method == "HSD":
         return get_HSD_circuit(time, n_steps)
     if method == "SSD":
-        return get_SSD_circuit(time, n_steps)
+        return get_SSD_circuit(time, n_steps, initial_state=initial_state)
     return "specify a decomposition technique (HSD or SSD)"
 
-def get_HSD_circuit(time, n_steps, initial_state={"110": 1}):
+def get_HSD_circuit(time, n_steps):
     print("attenzione! funziona solo per lo stato 110")
     # Build the permutation operator
     B_qr=QuantumRegister(3, name="q_")
@@ -248,14 +247,7 @@ def get_HSD_circuit(time, n_steps, initial_state={"110": 1}):
 
     qr_HSD = QuantumRegister(3, name="q_")
     qc_HSD = QuantumCircuit(qr_HSD, name="D")
-
-    # the permutation of 110 is 110 itself, so we prepare it.
-    initial_state = "110"
-
-    for qubit in range(3):
-        if initial_state[::-1][qubit] == "1":
-            qc_HSD.x(qr_HSD[qubit])
-
+    # here the state isn't preparated. 
     qc_HSD.append(D_qc, [qr_HSD[0], qr_HSD[1]])
     qc_HSD.append(B_qc.inverse(), qr_HSD)
 
