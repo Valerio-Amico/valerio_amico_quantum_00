@@ -180,9 +180,15 @@ def fidelity_count(result, qcs, target_state):
 
 def get_evolution_circuit(time, n_steps, method="HSD"):
     '''
-    Returns the evolution circuit.
+    Returns the evolution circuit with the associated QuantumRegister.
+
+    Returns
+    ----
+
+        QuantumCircuit, QuantumRegister
+        
     '''
-    print("finire get_evolution_circuit")
+    print("attenzione al caso != HSD o SSD.  -get_evolution_circuit")
     if method == "HSD":
         return get_HSD_circuit(time, n_steps)
     if method == "SSD":
@@ -237,7 +243,7 @@ def get_HSD_circuit(time, n_steps, initial_state={"110": 1}):
     qc_HSD.append(D_qc, [qr_HSD[0], qr_HSD[1]])
     qc_HSD.append(B_qc.inverse(), qr_HSD)
 
-    return qc_HSD
+    return qc_HSD, qr_HSD
 
 def get_SSD_circuit(time, n_steps, initial_state={"110": 1}):
     '''
@@ -257,14 +263,27 @@ def get_SSD_circuit(time, n_steps, initial_state={"110": 1}):
     # transpile and draw the circuit
     from qiskit import transpile
     qc_U=transpile(qc_U, basis_gates=["cx","rz","x","sx"])
-    return qc_U
+    return qc_U, qr_U
 
-def fast_tomography_calibration_MeasFitters(results, method="NIC", U_ideal=None):
+def fast_tomography_calibration_MeasFitters(calibration_results, method="NIC", U_ideal=None):
     '''
     builds a list of CompleteMeasFitter objects, for each tomography basis.
+    
+    Args:
+    ----
+
+        calibration_results (job.result()): the results of the calibration NIC or CIC.
+        method (string): "NIC" or "CIC", chose the calibration technique.
+        U_ideal (np.array): unitary matrix of the circuit. Used only for CIC.
+
+    Returns:
+    ----
+
+        meas_fitters (list of CompleteMeasCal objects): one for each tomography basis.
+        
     '''
     state_labels = ['000', '001', '010', '011', '100', '101', '110', '111']  
-    meas_fitter = CompleteMeasFitter(results, state_labels=state_labels)
+    meas_fitter = CompleteMeasFitter(calibration_results, state_labels=state_labels)
     # copy the measured probability matrix by the calibration circuits.
     U_tilde = meas_fitter.cal_matrix
     #defining the tomography basis circuits.
@@ -298,7 +317,6 @@ def fast_tomography_calibration_MeasFitters(results, method="NIC", U_ideal=None)
         meas_fitters.append(meas_fitter_aus)
     return meas_fitters
 
-
 def _get_M(theta, phi, omega, name="M"): # defining the M matrix
     '''
     returns the fixed 2-qubits magnetization gate.
@@ -316,7 +334,6 @@ def _get_M(theta, phi, omega, name="M"): # defining the M matrix
     M_qc.rz(2*phi,qr[1])
 
     return M_qc
-
 
 def DecimalToBinary(num, number_of_qubits):
     """Converts a decimal to a binary string of length ``number_of_qubits``."""
