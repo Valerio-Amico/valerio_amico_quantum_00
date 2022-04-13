@@ -43,19 +43,19 @@ B = np.array(
     [0,0,0,0,0,0,1,0],
     [0,0,0,0,0,0,0,1]]
 )
+# B quantum circuit: this code is reported from the final commit.
+# some functions need it.
+_B_qr=QuantumRegister(3, name="q-")
+_B_qc=QuantumCircuit(_B_qr, name="B")
+_B_qc.x(_B_qr[2])
+_B_qc.cx(_B_qr[1],_B_qr[0])
+_B_qc.cx(_B_qr[2],_B_qr[1])
+_B_qc.cx(_B_qr[1],_B_qr[0])
+_B_qc.x([_B_qr[0],_B_qr[1],_B_qr[2]])
+_B_qc.append(Toffoli_gate,[_B_qr[0],_B_qr[1],_B_qr[2]])
+_B_qc.x([_B_qr[0],_B_qr[1]])
 # look up table of B
-state_permutations = {'110':'110', '111':'111', '101': '101', '000':'011', '011':'100', '100':'000', '001':'010', '010':'001'}
-
-# Builds the permutation operator circuit
-B_qr=QuantumRegister(3, name="q_")
-B_qc=QuantumCircuit(B_qr, name="B")
-B_qc.x(B_qr[2])
-B_qc.cx(B_qr[1],B_qr[0])
-B_qc.cx(B_qr[2],B_qr[1])
-B_qc.cx(B_qr[1],B_qr[0])
-B_qc.x([B_qr[0],B_qr[1],B_qr[2]])
-B_qc.append(Toffoli_gate, [B_qr[0],B_qr[1],B_qr[2]])
-B_qc.x([B_qr[0],B_qr[1]])
+state_permutations_B = {'110':'110', '111':'111', '101': '101', '000':'011', '011':'100', '100':'000', '001':'010', '010':'001'}
 
 def trotter_step_matrix(time, n_steps):
     """Computes numerically the trotter step"""
@@ -224,7 +224,6 @@ def fidelity_count(result, qcs, target_state):
 
 
 
-
 def get_evolution_circuit(time, n_steps, method="HSD", initial_state={"110": 1}):
     '''
     Returns the evolution circuit with the associated QuantumRegister.
@@ -255,7 +254,7 @@ def get_evolution_circuit(time, n_steps, method="HSD", initial_state={"110": 1})
 def get_HSD_circuit(time, n_steps):
 
     T = trotterized_matrix(time, n_steps)
-    T_b = np.linalg.multi_dot([ B, T, B.transpose() ])
+    T_b = np.linalg.multi_dot([B, T, B.transpose() ])
 
     D = T_b[0:4, 0:4]
     # Transpile the D operator and build the evolution circuit
@@ -267,7 +266,7 @@ def get_HSD_circuit(time, n_steps):
     qc_HSD = QuantumCircuit(qr_HSD, name="D")
     # here the state isn't preparated. 
     qc_HSD.append(D_qc, [qr_HSD[0], qr_HSD[1]])
-    qc_HSD.append(B_qc.inverse(), qr_HSD)
+    qc_HSD.append(_B_qc.inverse(), qr_HSD)
 
     return qc_HSD, qr_HSD
 
@@ -308,7 +307,7 @@ def fast_tomography_calibration_MeasFitters(calibration_results, method="NIC", U
         meas_fitters (list of CompleteMeasCal objects): one for each tomography basis.
         
     '''
-    state_labels = ['000', '001', '010', '011', '100', '101', '110', '111']  
+    state_labels = ['000', '001', '010', '011', '100', '101', '110', '111']
     meas_fitter = CompleteMeasFitter(calibration_results, state_labels=state_labels)
     # copy the measured probability matrix by the calibration circuits.
     U_tilde = meas_fitter.cal_matrix
@@ -345,9 +344,10 @@ def fast_tomography_calibration_MeasFitters(calibration_results, method="NIC", U
 
 def _get_M(theta, phi, omega, name="M"): # defining the M matrix
     '''
-    returns the fixed 2-qubits magnetization gate.
+    returns the fixed 2-qubits magnetization gate. 
+    This is a copy of the function in the notebook, 
+    some functions need it here.
     '''
-
     qr=QuantumRegister(2, name="q_")
     M_qc=QuantumCircuit(qr, name=name)
 
