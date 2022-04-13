@@ -1,0 +1,5 @@
+1)
+nella funzione get_evolution_circuit aggiustare il warning
+
+2)
+stato iniziale

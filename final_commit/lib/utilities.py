@@ -103,7 +103,7 @@ def get_gates_parameters(U, initial_state={"110": 1.0}):
 
     return r1, r2, f1, f2, a1, a2
 
-def get_calibration_circuits(qc, method="NIC"):
+def get_calibration_circuits(qc, method="NIC", eigenvector=None):
     '''
     Returns a list of calibration circuits for all the methods: CIC, NIC and qiskit calibration matrix.
 
@@ -111,11 +111,14 @@ def get_calibration_circuits(qc, method="NIC"):
     ----
         qc (QuantumCircuit): the quantum circuit you wont to calibrate.
         method (string): the method of calibration. Can be CIC, NIC or qiskit.
+        eigenvector (string): is a string of binary, example "111". Is the prepared state in the case
+                              NIC mitigation tecnique. For CIC and qiskit calibraitions is useless.
 
     Return
     ----
         calib_circuits (list of QuantumCircuit): list of calibration circuits.
     '''
+
     print("invertire lo stato iniziale se la decomposizione è HSD.")
     calib_circuits = []
     state_labels = ['000', '001', '010', '011', '100', '101', '110', '111']  
@@ -124,14 +127,27 @@ def get_calibration_circuits(qc, method="NIC"):
         cr_cal = ClassicalRegister(3, name = "c")
         qr_cal = QuantumRegister(3, name = "q_")
         qc_cal = QuantumCircuit(qr_cal, cr_cal, name=f"mcalcal_{state}")
-        # first we append the circuit (if method == "NIC").
-        if method == "NIC": qc_cal.append(qc, qr_cal)
-        # than we prepare the state.
-        for qubit in range(3):
-            if state[::-1][qubit] == "1":
-                qc_cal.x(qr_cal[qubit])
-        # then we append the circuit (if method == "CIC").
-        if method == "CIC": qc_cal.append(qc, qr_cal)
+        if method == "NIC": 
+            # first we prepare the eigenstate (if method == "NIC").
+            for qubit in range(3):
+                if eigenvector[::-1][qubit] == "1":
+                    qc_cal.x(qr_cal[qubit])
+            # then we append the circuit
+            qc_cal.append(qc, qr_cal)
+            # than we append the gate that bring the eigenstate to the computational basis.
+            for qubit in range(3):
+                if eigenvector[::-1][qubit] == "1" and state[::-1][qubit] == "0":
+                    qc_cal.x(qr_cal[qubit])
+                elif eigenvector[::-1][qubit] == "0" and state[::-1][qubit] == "1":
+                    qc_cal.x(qr_cal[qubit])
+
+        if method == "CIC": 
+            # first we prepare the state.
+            for qubit in range(3):
+                if state[::-1][qubit] == "1":
+                    qc_cal.x(qr_cal[qubit])
+            # than we append the circuit
+            qc_cal.append(qc, qr_cal)
         # measure all
         qc_cal.measure(qr_cal, cr_cal)
         calib_circuits.append(qc_cal)
