@@ -103,7 +103,7 @@ def get_gates_parameters(U, initial_state={"110": 1.0}):
 
     return r1, r2, f1, f2, a1, a2
 
-def get_calibration_circuits(qc, method="NIC"):
+def get_calibration_circuits(qc, method="NIC", eigenvector=None):
     '''
     Returns a list of calibration circuits for all the methods: CIC, NIC and qiskit calibration matrix.
 
@@ -111,12 +111,15 @@ def get_calibration_circuits(qc, method="NIC"):
     ----
         qc (QuantumCircuit): the quantum circuit you wont to calibrate.
         method (string): the method of calibration. Can be CIC, NIC or qiskit.
+        eigenvector (string): is a string of binary, example "111". Is the prepared state in the case
+                              NIC mitigation tecnique. For CIC and qiskit calibraitions is useless.
 
     Return
     ----
         calib_circuits (list of QuantumCircuit): list of calibration circuits.
     '''
 
+    print("invertire lo stato iniziale se la decomposizione è HSD.")
     calib_circuits = []
     state_labels = ['000', '001', '010', '011', '100', '101', '110', '111']  
 
@@ -124,14 +127,27 @@ def get_calibration_circuits(qc, method="NIC"):
         cr_cal = ClassicalRegister(3, name = "c")
         qr_cal = QuantumRegister(3, name = "q_")
         qc_cal = QuantumCircuit(qr_cal, cr_cal, name=f"mcalcal_{state}")
-        # first we append the circuit (if method == "NIC").
-        if method == "NIC": qc_cal.append(qc, qr_cal)
-        # than we prepare the state.
-        for qubit in range(3):
-            if state[::-1][qubit] == "1":
-                qc_cal.x(qr_cal[qubit])
-        # then we append the circuit (if method == "CIC").
-        if method == "CIC": qc_cal.append(qc, qr_cal)
+        if method == "NIC": 
+            # first we prepare the eigenstate (if method == "NIC").
+            for qubit in range(3):
+                if eigenvector[::-1][qubit] == "1":
+                    qc_cal.x(qr_cal[qubit])
+            # then we append the circuit
+            qc_cal.append(qc, qr_cal)
+            # than we append the gate that bring the eigenstate to the computational basis.
+            for qubit in range(3):
+                if eigenvector[::-1][qubit] == "1" and state[::-1][qubit] == "0":
+                    qc_cal.x(qr_cal[qubit])
+                elif eigenvector[::-1][qubit] == "0" and state[::-1][qubit] == "1":
+                    qc_cal.x(qr_cal[qubit])
+
+        if method == "CIC": 
+            # first we prepare the state.
+            for qubit in range(3):
+                if state[::-1][qubit] == "1":
+                    qc_cal.x(qr_cal[qubit])
+            # than we append the circuit
+            qc_cal.append(qc, qr_cal)
         # measure all
         qc_cal.measure(qr_cal, cr_cal)
         calib_circuits.append(qc_cal)
@@ -179,6 +195,16 @@ def fidelity_count(result, qcs, target_state):
 
 
 def get_evolution_circuit(time, n_steps, method="HSD"):
+    '''
+    Returns the evolution circuit with the associated QuantumRegister.
+
+    Returns
+    ----
+
+        QuantumCircuit, QuantumRegister
+        
+    '''
+    print("attenzione al caso != HSD o SSD.  -get_evolution_circuit")
     if method == "HSD":
         return get_HSD_circuit(time, n_steps)
     if method == "SSD":
@@ -186,6 +212,7 @@ def get_evolution_circuit(time, n_steps, method="HSD"):
     return "specify a decomposition technique (HSD or SSD)"
 
 def get_HSD_circuit(time, n_steps, initial_state={"110": 1}):
+    print("attenzione! funziona solo per lo stato 110")
     # Build the permutation operator
     B_qr=QuantumRegister(3, name="q_")
     B_qc=QuantumCircuit(B_qr, name="B")
@@ -232,9 +259,12 @@ def get_HSD_circuit(time, n_steps, initial_state={"110": 1}):
     qc_HSD.append(D_qc, [qr_HSD[0], qr_HSD[1]])
     qc_HSD.append(B_qc.inverse(), qr_HSD)
 
-    return qc_HSD
+    return qc_HSD, qr_HSD
 
 def get_SSD_circuit(time, n_steps, initial_state={"110": 1}):
+    '''
+    returns the evolution circuit with the Single State Decomposition.
+    '''
     # getting the parameters for the gates M1 and M2, solving the equations described in 1.1).
     theta_1, theta_2, phi_1, phi_2, omega_1, omega_2 = get_gates_parameters(trotterized_matrix(time, n_steps), initial_state=initial_state)
     # build M1 and M2
@@ -249,52 +279,64 @@ def get_SSD_circuit(time, n_steps, initial_state={"110": 1}):
     # transpile and draw the circuit
     from qiskit import transpile
     qc_U=transpile(qc_U, basis_gates=["cx","rz","x","sx"])
-    return qc_U
+    return qc_U, qr_U
 
-def fast_tomography_calibration_MeasFitters(qc, results, method="NIC"):
+def fast_tomography_calibration_MeasFitters(calibration_results, method="NIC", U_ideal=None):
+    '''
+    builds a list of CompleteMeasFitter objects, for each tomography basis.
+    
+    Args:
+    ----
 
+        calibration_results (job.result()): the results of the calibration NIC or CIC.
+        method (string): "NIC" or "CIC", chose the calibration technique.
+        U_ideal (np.array): unitary matrix of the circuit. Used only for CIC.
+
+    Returns:
+    ----
+
+        meas_fitters (list of CompleteMeasCal objects): one for each tomography basis.
+        
+    '''
     state_labels = ['000', '001', '010', '011', '100', '101', '110', '111']  
-    meas_fitter = CompleteMeasFitter(results, state_labels=state_labels)
-
+    meas_fitter = CompleteMeasFitter(calibration_results, state_labels=state_labels)
+    # copy the measured probability matrix by the calibration circuits.
     U_tilde = meas_fitter.cal_matrix
-
     #defining the tomography basis circuits.
     qr_basi = QuantumRegister(3)
     qc_basi = QuantumCircuit(qr_basi)
     tomography_basis = state_tomography_circuits(qc_basi, qr_basi)
-    # computing the ideal matrix of the circuit.
-    U_ideal = matrix_from_circuit(qc)
-    U_ideal_abs = np.abs(U_ideal)**2
-    U_ideal_abs_inv = np.linalg.inv(U_ideal_abs)
-
+    # computing the calibration matrix in the computational basis.
     if method == "NIC":
         C = U_tilde
     elif method == "CIC":
+        # computing the ideal probability matrix of the circuit.
+        if U_ideal is None: print("expected the U_ideal unitary matrix of the circuit.")
+        U_ideal_abs = np.abs(U_ideal)**2
+        U_ideal_abs_inv = np.linalg.inv(U_ideal_abs)
         C = np.dot(U_tilde, U_ideal_abs_inv)
-    # building the fast tomography circuits calibration.
-    C_matrices = []
+    # building the fast tomography circuits calibration: a list of 27 CompleteMeasFitter objects, one for each basis.
+    meas_fitters = []
     for basis in tomography_basis:
-        # compute the tomography unitary basis matrix and the inverse
+        # compute the tomography unitary basis matrix and the inverse.
         basis.remove_final_measurements()
         base_matrix_amplitudes = matrix_from_circuit(basis)
         base_matrix_amplitudes_inverse = np.linalg.inv(base_matrix_amplitudes)
-        # compute the probability matrix of the base changing
+        # compute the probability matrix of the base changing.
         base_matrix = np.abs(base_matrix_amplitudes)**2
         base_matrix_inverse = np.abs(base_matrix_amplitudes_inverse)**2
-        # compute the calibration matrix in the new basis
+        # compute the calibration matrix in the new basis.
         C_base = np.linalg.multi_dot([base_matrix, C,  base_matrix_inverse])
-        C_matrices.append(C_base)
-        
-    meas_fitters = []
-    for tomography_basis in range(3**3):
+        # define a new object CompleteMeasFitter.
         meas_fitter_aus = copy.deepcopy(meas_fitter)
-        meas_fitter_aus._tens_fitt.cal_matrices[0]=C_matrices[tomography_basis]
+        meas_fitter_aus._tens_fitt.cal_matrices[0]=C_base
         meas_fitters.append(meas_fitter_aus)
-
     return meas_fitters
 
-
 def _get_M(theta, phi, omega, name="M"): # defining the M matrix
+    '''
+    returns the fixed 2-qubits magnetization gate.
+    '''
 
     qr=QuantumRegister(2, name="q_")
     M_qc=QuantumCircuit(qr, name=name)
@@ -308,7 +350,6 @@ def _get_M(theta, phi, omega, name="M"): # defining the M matrix
     M_qc.rz(2*phi,qr[1])
 
     return M_qc
-
 
 def DecimalToBinary(num, number_of_qubits):
     """Converts a decimal to a binary string of length ``number_of_qubits``."""
