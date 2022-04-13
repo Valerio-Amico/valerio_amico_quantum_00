@@ -252,7 +252,9 @@ def get_evolution_circuit(time, n_steps, method="HSD", initial_state={"110": 1})
     raise ValueError("The decomposition method 'method' must be chosen between 'HSD' or 'SSD'.")
 
 def get_HSD_circuit(time, n_steps):
-
+    '''
+    returns the evolution circuit with the Hilbert Space Decomposition, prepared in the state |000>
+    '''
     T = trotterized_matrix(time, n_steps)
     T_b = np.linalg.multi_dot([B, T, B.transpose() ])
 
@@ -272,7 +274,7 @@ def get_HSD_circuit(time, n_steps):
 
 def get_SSD_circuit(time, n_steps, initial_state={"110": 1}):
     '''
-    returns the evolution circuit with the Single State Decomposition.
+    returns the evolution circuit with the Single State Decomposition, prepared in the state |000>
     '''
     # getting the parameters for the gates M1 and M2, solving the equations described in 1.1).
     theta_1, theta_2, phi_1, phi_2, omega_1, omega_2 = get_gates_parameters(trotterized_matrix(time, n_steps), initial_state=initial_state)
