@@ -1,11 +1,11 @@
 1)
-nella funzione get_evolution_circuit aggiustare il warning
+nella funzione get_evolution_circuit aggiustare il warning: FATTO!
 
 2)
 stato iniziale in final commit è definito un po a cazzo
 
 3)
-cambiare il nome al toffoli gate
+cambiare il nome al toffoli gate: FATTO!
 
 4)
 far diventare un python script .py l'evoluzione temporale.

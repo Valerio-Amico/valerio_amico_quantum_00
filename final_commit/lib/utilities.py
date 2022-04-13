@@ -44,18 +44,7 @@ B = np.array(
     [0,0,0,0,0,0,0,1]]
 )
 # look up table of B
-state_permutations = {'110':'110', '111':'111', '101': '101', '000':'011', '011':'100', '100':'000', '001':'010', '010':'001'}
-
-# Builds the permutation operator circuit
-B_qr=QuantumRegister(3, name="q_")
-B_qc=QuantumCircuit(B_qr, name="B")
-B_qc.x(B_qr[2])
-B_qc.cx(B_qr[1],B_qr[0])
-B_qc.cx(B_qr[2],B_qr[1])
-B_qc.cx(B_qr[1],B_qr[0])
-B_qc.x([B_qr[0],B_qr[1],B_qr[2]])
-B_qc.append(Toffoli_gate, [B_qr[0],B_qr[1],B_qr[2]])
-B_qc.x([B_qr[0],B_qr[1]])
+state_permutations_B = {'110':'110', '111':'111', '101': '101', '000':'011', '011':'100', '100':'000', '001':'010', '010':'001'}
 
 def trotter_step_matrix(time, n_steps):
     """Computes numerically the trotter step"""
@@ -224,7 +213,6 @@ def fidelity_count(result, qcs, target_state):
 
 
 
-
 def get_evolution_circuit(time, n_steps, method="HSD", initial_state={"110": 1}):
     '''
     Returns the evolution circuit with the associated QuantumRegister.
@@ -308,7 +296,7 @@ def fast_tomography_calibration_MeasFitters(calibration_results, method="NIC", U
         meas_fitters (list of CompleteMeasCal objects): one for each tomography basis.
         
     '''
-    state_labels = ['000', '001', '010', '011', '100', '101', '110', '111']  
+    state_labels = ['000', '001', '010', '011', '100', '101', '110', '111']
     meas_fitter = CompleteMeasFitter(calibration_results, state_labels=state_labels)
     # copy the measured probability matrix by the calibration circuits.
     U_tilde = meas_fitter.cal_matrix
