@@ -1,6 +1,6 @@
-from logging import warning
 import numpy as np
 import copy
+import warnings
 from qiskit import (
     Aer,
     QuantumCircuit,
@@ -43,6 +43,8 @@ B = np.array(
     [0,0,0,0,0,0,1,0],
     [0,0,0,0,0,0,0,1]]
 )
+# look up table of B
+state_permutations = {'110':'110', '111':'111', '101': '101', '000':'011', '011':'100', '100':'000', '001':'010', '010':'001'}
 
 # Builds the permutation operator circuit
 B_qr=QuantumRegister(3, name="q_")
@@ -70,14 +72,23 @@ def get_gates_parameters(U, initial_state={"110": 1.0}):
     Since the evolution is trivial in the magnetization 0 and 3 subspaces
     the procedure is done only for mag==1 and mag==2
 
+    Note: 
+        we suggest the implementation for a generic state 
+        but the only one tested is the inital_state of the challenge '110'.
+
     Args
     ----
         U : np.ndarray
             the trotterized evolution matrix
         initial_state : dict
             the initial state to be evolved in format {"state": amplitude}
+    Returns
+    ----
+        theta_1, theta_2, phi_1, phi_2, omega_1, omega_2 (tuple(float)): 
+    
     """
-
+    if initial_state != {"110": 1.0}:
+        warnings.warn("Any initial_state different from '110' has not been sufficiently tested.")
     # Builds up the array associated to the initial state
     state = np.zeros(8, dtype=np.complex)
 
@@ -100,30 +111,30 @@ def get_gates_parameters(U, initial_state={"110": 1.0}):
         subspace_coords = np.array([3, 5, 6])
         alpha, beta, gamma = state[subspace_coords]
 
-        r1 = 0.5 * (np.angle(alpha) + np.angle(gamma))
-        r2 = 0
+        theta_1 = 0.5 * (np.angle(alpha) + np.angle(gamma))
+        theta_2 = 0
 
-        f1 = 0.5 * (np.angle(gamma) - np.angle(beta) - np.pi)
-        f2 = 0.5 * (np.angle(beta) - np.angle(alpha) + np.pi)
+        phi_1 = 0.5 * (np.angle(gamma) - np.angle(beta) - np.pi)
+        phi_2 = 0.5 * (np.angle(beta) - np.angle(alpha) + np.pi)
 
-        a1 = np.arccos(np.abs(gamma))
-        a2 = np.arccos(np.abs(beta) / np.sin(a1))
+        omega_1 = np.arccos(np.abs(gamma))
+        omega_2 = np.arccos(np.abs(beta) / np.sin(omega_1))
 
     elif magnetization == 1:
         raise NotImplementedError("The magnetization==1 case has not been sufficiently tested")
         subspace_coords = np.array([3, 5, 6])
         alpha, beta, gamma = state[subspace_coords]
 
-        r1 = 0.5 * (-np.angle(alpha) - np.angle(gamma))
-        r2 = 0
+        theta_1 = 0.5 * (-np.angle(alpha) - np.angle(gamma))
+        theta_2 = 0
 
-        f1 = 0.5 * (np.angle(beta) - np.angle(gamma))
-        f2 = 0.5 * (np.angle(alpha) - np.angle(beta)) - f1
+        phi_1 = 0.5 * (np.angle(beta) - np.angle(gamma))
+        phi_2 = 0.5 * (np.angle(alpha) - np.angle(beta)) - phi_1
 
-        a1 = np.arcos(np.abs(gamma))
-        a2 = np.arccos(np.abs(beta) / np.sin(a1))
+        omega_1 = np.arcos(np.abs(gamma))
+        omega_2 = np.arccos(np.abs(beta) / np.sin(omega_1))
 
-    return r1, r2, f1, f2, a1, a2
+    return theta_1, theta_2, phi_1, phi_2, omega_1, omega_2
 
 def get_calibration_circuits(qc, method="NIC", eigenvector=None):
     '''
@@ -161,7 +172,7 @@ def get_calibration_circuits(qc, method="NIC", eigenvector=None):
                     qc_cal.x(qr_cal[qubit])
                 elif eigenvector[::-1][qubit] == "0" and state[::-1][qubit] == "1":
                     qc_cal.x(qr_cal[qubit])
-
+        # CIC case: first we prepare the initial state than we append the evolution.
         if method == "CIC": 
             # first we prepare the state.
             for qubit in range(3):
@@ -243,14 +254,10 @@ def get_evolution_circuit(time, n_steps, method="HSD", initial_state={"110": 1})
 
 def get_HSD_circuit(time, n_steps):
 
-    
-
     T = trotterized_matrix(time, n_steps)
     T_b = np.linalg.multi_dot([ B, T, B.transpose() ])
 
     D = T_b[0:4, 0:4]
-
-    from qiskit import transpile
     # Transpile the D operator and build the evolution circuit
     D_qc = QuantumCircuit(2, name="D")
     D_qc.unitary(D,[0,1])    
