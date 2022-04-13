@@ -6,3 +6,6 @@ stato iniziale in final commit è definito un po a cazzo
 
 3)
 cambiare il nome al toffoli gate
+
+4)
+far diventare un python script .py l'evoluzione temporale.
