@@ -31,7 +31,29 @@ H2 = np.kron(Id, np.kron(X,X)) + np.kron(Id, np.kron(Y,Y)) + np.kron(Id, np.kron
 # Loads the Jakarta-adapted Toffoli gate
 dirname = os.path.dirname(__file__)
 Toffoli_gate = QuantumCircuit.from_qasm_file(os.path.join(dirname, "Toffoli.qasm"))
+Toffoli_gate.name = "optimized\ntoffoli"
+# B is the permutation matrix used in the HSD 
+B = np.array(
+   [[0,0,0,0,1,0,0,0],
+    [0,0,1,0,0,0,0,0],
+    [0,1,0,0,0,0,0,0],
+    [1,0,0,0,0,0,0,0],
+    [0,0,0,1,0,0,0,0],
+    [0,0,0,0,0,1,0,0],
+    [0,0,0,0,0,0,1,0],
+    [0,0,0,0,0,0,0,1]]
+)
 
+# Builds the permutation operator circuit
+B_qr=QuantumRegister(3, name="q_")
+B_qc=QuantumCircuit(B_qr, name="B")
+B_qc.x(B_qr[2])
+B_qc.cx(B_qr[1],B_qr[0])
+B_qc.cx(B_qr[2],B_qr[1])
+B_qc.cx(B_qr[1],B_qr[0])
+B_qc.x([B_qr[0],B_qr[1],B_qr[2]])
+B_qc.append(Toffoli_gate, [B_qr[0],B_qr[1],B_qr[2]])
+B_qc.x([B_qr[0],B_qr[1]])
 
 def trotter_step_matrix(time, n_steps):
     """Computes numerically the trotter step"""
@@ -192,47 +214,36 @@ def fidelity_count(result, qcs, target_state):
 
 
 
-
 def get_evolution_circuit(time, n_steps, method="HSD", initial_state={"110": 1}):
     '''
     Returns the evolution circuit with the associated QuantumRegister.
 
+    Args:
+    ----
+
+        time (float): the evolution time.
+        n_steps (int): number of trotter steps.
+        method (string): decomposition method, can be "HSD" or "SSD".
+        initial_state (dict): {"state": amplitude, ...}. Is the initiat state, used only for the SSD
+                              to compute the circuit parameters.
+                              Warning: functions are not optimized for any initial state,
+                              everythink works with "110", can be problems with other initial states.
+
     Returns
     ----
 
-        QuantumCircuit, QuantumRegister
+        QuantumCircuit, QuantumRegister : circuit and quantum register of the evolution circuit.
         
     '''
-    print("attenzione al caso != HSD o SSD.  -get_evolution_circuit")
     if method == "HSD":
         return get_HSD_circuit(time, n_steps)
-    if method == "SSD":
+    elif method == "SSD":
         return get_SSD_circuit(time, n_steps, initial_state=initial_state)
-    return "specify a decomposition technique (HSD or SSD)"
+    raise ValueError("The decomposition method 'method' must be chosen between 'HSD' or 'SSD'.")
 
 def get_HSD_circuit(time, n_steps):
-    print("attenzione! funziona solo per lo stato 110")
-    # Build the permutation operator
-    B_qr=QuantumRegister(3, name="q_")
-    B_qc=QuantumCircuit(B_qr, name="B")
-    B_qc.x(B_qr[2])
-    B_qc.cx(B_qr[1],B_qr[0])
-    B_qc.cx(B_qr[2],B_qr[1])
-    B_qc.cx(B_qr[1],B_qr[0])
-    B_qc.x([B_qr[0],B_qr[1],B_qr[2]])
-    B_qc.append(Toffoli_gate, [B_qr[0],B_qr[1],B_qr[2]])
-    B_qc.x([B_qr[0],B_qr[1]])
 
-    B = np.array(
-       [[0,0,0,0,1,0,0,0],
-        [0,0,1,0,0,0,0,0],
-        [0,1,0,0,0,0,0,0],
-        [1,0,0,0,0,0,0,0],
-        [0,0,0,1,0,0,0,0],
-        [0,0,0,0,0,1,0,0],
-        [0,0,0,0,0,0,1,0],
-        [0,0,0,0,0,0,0,1]]
-    )
+    
 
     T = trotterized_matrix(time, n_steps)
     T_b = np.linalg.multi_dot([ B, T, B.transpose() ])
@@ -346,3 +357,22 @@ def _get_M(theta, phi, omega, name="M"): # defining the M matrix
 def DecimalToBinary(num, number_of_qubits):
     """Converts a decimal to a binary string of length ``number_of_qubits``."""
     return f"{num:b}".zfill(number_of_qubits)
+
+def occurrences_to_vector(occurrences_dict):
+    """Converts the occurrences dict to vector.
+
+    Args:
+    ----
+
+        occurrences_list (list) : the list of dicts returned by BaseJob.results.get_counts() 
+    
+    Returns:
+    ----
+
+        counts_vector (np.array): the vector of counts.
+
+    """
+    counts_vector = np.zeros(8)
+    for i, state in enumerate(occurrences_dict):
+        counts_vector[i] = occurrences_dict[state]
+    return counts_vector
