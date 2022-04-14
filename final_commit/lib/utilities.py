@@ -43,6 +43,9 @@ B = np.array(
     [0,0,0,0,0,0,1,0],
     [0,0,0,0,0,0,0,1]]
 )
+# look up table of B
+state_permutations_B = {'110':'110', '111':'111', '101': '101', '000':'011', '011':'100', '100':'000', '001':'010', '010':'001'}
+
 # B quantum circuit: this code is reported from the final commit.
 # some functions need it.
 _B_qr=QuantumRegister(3, name="q-")
@@ -54,8 +57,6 @@ _B_qc.cx(_B_qr[1],_B_qr[0])
 _B_qc.x([_B_qr[0],_B_qr[1],_B_qr[2]])
 _B_qc.append(Toffoli_gate,[_B_qr[0],_B_qr[1],_B_qr[2]])
 _B_qc.x([_B_qr[0],_B_qr[1]])
-# look up table of B
-state_permutations_B = {'110':'110', '111':'111', '101': '101', '000':'011', '011':'100', '100':'000', '001':'010', '010':'001'}
 
 def trotter_step_matrix(time, n_steps):
     """Computes numerically the trotter step"""
@@ -67,7 +68,7 @@ def trotterized_matrix(time, n_steps):
 
 def get_gates_parameters(U, initial_state={"110": 1.0}):
     """Finds the parameters of the gates based on the system of equations
-    defined by the numerical evolution matrix.
+    defined by the numerical evolution matrix, for the SSD.
 
     Since the evolution is trivial in the magnetization 0 and 3 subspaces
     the procedure is done only for mag==1 and mag==2
@@ -215,7 +216,7 @@ def matrix_from_circuit(qc, simulator = "unitary_simulator", phase=0):
 
 def fidelity_count(result, qcs, target_state):
     '''
-    given the job result and the targhet state it returns the fidelity
+    given job result, tomography circuits and targhet state it returns the fidelity score.
     '''
     tomo_ising = StateTomographyFitter(result, qcs)
     rho_fit_ising = tomo_ising.fit(method="lstsq")
@@ -252,7 +253,9 @@ def get_evolution_circuit(time, n_steps, method="HSD", initial_state={"110": 1})
     raise ValueError("The decomposition method 'method' must be chosen between 'HSD' or 'SSD'.")
 
 def get_HSD_circuit(time, n_steps):
-
+    '''
+    returns the evolution circuit with the Hilbert Space Decomposition, prepared in the state |000>
+    '''
     T = trotterized_matrix(time, n_steps)
     T_b = np.linalg.multi_dot([B, T, B.transpose() ])
 
@@ -272,7 +275,7 @@ def get_HSD_circuit(time, n_steps):
 
 def get_SSD_circuit(time, n_steps, initial_state={"110": 1}):
     '''
-    returns the evolution circuit with the Single State Decomposition.
+    returns the evolution circuit obtained with the Single State Decomposition.
     '''
     # getting the parameters for the gates M1 and M2, solving the equations described in 1.1).
     theta_1, theta_2, phi_1, phi_2, omega_1, omega_2 = get_gates_parameters(trotterized_matrix(time, n_steps), initial_state=initial_state)
@@ -286,7 +289,6 @@ def get_SSD_circuit(time, n_steps, initial_state={"110": 1}):
     qc_U.append(M1_qc, [qr_U[0], qr_U[1]])
     qc_U.append(M2_qc, [qr_U[1], qr_U[2]])
     # transpile and draw the circuit
-    from qiskit import transpile
     qc_U=transpile(qc_U, basis_gates=["cx","rz","x","sx"])
     return qc_U, qr_U
 
@@ -371,7 +373,7 @@ def occurrences_to_vector(occurrences_dict):
     Args:
     ----
 
-        occurrences_list (list) : the list of dicts returned by BaseJob.results.get_counts() 
+        occurrences_dict (dict) : dict returned by BaseJob.results.get_counts() 
     
     Returns:
     ----
