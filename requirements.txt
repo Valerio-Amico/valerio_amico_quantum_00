@@ -1,2 +1,4 @@
 qiskit==0.35
-sympy==1.9
+matplotlib
+numpy
+pylatexenc
