@@ -11,7 +11,7 @@ from qiskit import (
 )
 from qiskit.utils.mitigation.fitters import CompleteMeasFitter
 from qiskit.ignis.verification.tomography import StateTomographyFitter, state_tomography_circuits
-from qiskit.quantum_info import state_fidelity
+from qiskit.quantum_info import state_fidelity, Operator
 from scipy.linalg import expm
 import os
 
@@ -187,33 +187,6 @@ def get_calibration_circuits(qc, method="NIC", eigenvector=None):
 
     return calib_circuits
 
-def matrix_from_circuit(qc, simulator = "unitary_simulator", phase=0):
-
-    """
-    Return the matrix of the circuit:
-
-    Args 
-    ----
-
-        - qc (QuantumCircuit): the quantum circuit, without final measuraments, which you wont know the matrix.
-        - simulator (string): the simulator used for the aim:
-                                - "unitary_simulator": you will get the exact unitary matrix of the circuit.
-                                - "aer_simulator": you will get the probability matrices of the circuit in the computational base.
-        - phase (float): global phase
-
-    Return
-    -----
-
-        - the matrix of the circuit
-        
-    """
-
-    backend = Aer.get_backend(simulator)
-    job = execute(qc, backend, shots=32000)
-    result = job.result()
-    circuit_matrix = result.get_unitary(qc, decimals=40) * np.exp(1j * phase)
-    return circuit_matrix
-
 def fidelity_count(result, qcs, target_state):
     '''
     given job result, tomography circuits and targhet state it returns the fidelity score.
@@ -222,8 +195,6 @@ def fidelity_count(result, qcs, target_state):
     rho_fit_ising = tomo_ising.fit(method="lstsq")
     fid=state_fidelity(rho_fit_ising, target_state)
     return fid
-
-
 
 def get_evolution_circuit(time, n_steps, method="HSD", initial_state={"110": 1}):
     '''
@@ -331,7 +302,7 @@ def fast_tomography_calibration_MeasFitters(calibration_results, method="NIC", U
     for basis in tomography_basis:
         # compute the tomography unitary basis matrix and the inverse.
         basis.remove_final_measurements()
-        base_matrix_amplitudes = matrix_from_circuit(basis)
+        base_matrix_amplitudes = Operator(basis)
         base_matrix_amplitudes_inverse = np.linalg.inv(base_matrix_amplitudes)
         # compute the probability matrix of the base changing.
         base_matrix = np.abs(base_matrix_amplitudes)**2
