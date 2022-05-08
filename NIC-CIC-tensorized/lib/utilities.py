@@ -1,3 +1,4 @@
+import string
 import numpy as np
 import copy
 import warnings
@@ -187,32 +188,62 @@ def get_calibration_circuits(qc, method="NIC", eigenvector=None):
 
     return calib_circuits
 
-def matrix_from_circuit(qc, simulator = "unitary_simulator", phase=0):
+def get_tensorized_calibration_circuits(qc, method="NIC", eigenvector=None):
+    '''
+    Returns a list of calibration circuits for all the methods: T-CIC, T-NIC and T-qiskit calibration matrix.
 
-    """
-    Return the matrix of the circuit:
-
-    Args 
+    Args
     ----
-
-        - qc (QuantumCircuit): the quantum circuit, without final measuraments, which you wont know the matrix.
-        - simulator (string): the simulator used for the aim:
-                                - "unitary_simulator": you will get the exact unitary matrix of the circuit.
-                                - "aer_simulator": you will get the probability matrices of the circuit in the computational base.
-        - phase (float): global phase
+        qc (QuantumCircuit): the quantum circuit you wont to calibrate.
+        method (string): the method of calibration. Can be CIC, NIC or qiskit.
+        eigenvector (string): is a string of binary, example "111". Is the prepared state in the case
+                              NIC mitigation tecnique. For CIC and qiskit calibraitions is useless.
 
     Return
-    -----
+    ----
+        calib_circuits (list of QuantumCircuit): list of calibration circuits: 2*N circuits.
+        state_labels (list of strings)
+    '''
 
-        - the matrix of the circuit
-        
-    """
+    calib_circuits = []
+    state_labels = []
 
-    backend = Aer.get_backend(simulator)
-    job = execute(qc, backend, shots=32000)
-    result = job.result()
-    circuit_matrix = result.get_unitary(qc, decimals=40) * np.exp(1j * phase)
-    return circuit_matrix
+    for Qubit in range(len(qc.qubits)):
+        for label in ['0','1']:
+            state = ['0', '0', '0']
+            state[Qubit] = label
+            state = "".join(state)[::-1]
+            state_labels.append(state)
+            cr_cal = ClassicalRegister(1, name = "c")
+            qr_cal = QuantumRegister(3, name = "q_")
+            qc_cal = QuantumCircuit(qr_cal, cr_cal, name=f"mcalcal_{state}")
+            if method == "NIC": 
+                # first we prepare the eigenstate (if method == "NIC").
+                for qubit in range(3):
+                    if eigenvector[::-1][qubit] == "1":
+                        qc_cal.x(qr_cal[qubit])
+                # then we append the circuit
+                qc_cal.append(qc, qr_cal)
+                # than we append the gate that bring the eigenstate to the computational basis.
+                for qubit in range(3):
+                    if eigenvector[::-1][qubit] == "1" and state[::-1][qubit] == "0":
+                        qc_cal.x(qr_cal[qubit])
+                    elif eigenvector[::-1][qubit] == "0" and state[::-1][qubit] == "1":
+                        qc_cal.x(qr_cal[qubit])
+            # CIC case: first we prepare the initial state than we append the evolution.
+            if method == "CIC": 
+                # first we prepare the state.
+                for qubit in range(3):
+                    if state[::-1][qubit] == "1":
+                        qc_cal.x(qr_cal[qubit])
+                # than we append the circuit
+                qc_cal.append(qc, qr_cal)
+            # measure all
+            qc_cal.measure(qr_cal[Qubit], cr_cal)
+            calib_circuits.append(qc_cal)
+
+    return calib_circuits, state_labels
+
 
 def fidelity_count(result, qcs, target_state):
     '''
@@ -280,8 +311,8 @@ def get_SSD_circuit(time, n_steps, initial_state={"110": 1}):
     # getting the parameters for the gates M1 and M2, solving the equations described in 1.1).
     theta_1, theta_2, phi_1, phi_2, omega_1, omega_2 = get_gates_parameters(trotterized_matrix(time, n_steps), initial_state=initial_state)
     # build M1 and M2
-    M1_qc = _get_M(theta_1, phi_1, omega_1)
-    M2_qc = _get_M(theta_2, phi_2, omega_2)
+    M1_qc = get_M(theta_1, phi_1, omega_1)
+    M2_qc = get_M(theta_2, phi_2, omega_2)
     # define the circuit of U
     qr_U = QuantumRegister(3 ,name="q_")
     qc_U = QuantumCircuit(qr_U, name="U")
@@ -344,7 +375,7 @@ def fast_tomography_calibration_MeasFitters(calibration_results, method="NIC", U
         meas_fitters.append(meas_fitter_aus)
     return meas_fitters
 
-def _get_M(theta, phi, omega, name="M"): # defining the M matrix
+def get_M(theta, phi, omega, name="M"): # defining the M matrix
     '''
     returns the fixed 2-qubits magnetization gate. 
     This is a copy of the function in the notebook, 
