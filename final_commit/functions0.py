@@ -2,7 +2,7 @@ import numpy as np
 from copy import deepcopy
 from sympy import *
 from sympy.physics.quantum import TensorProduct as Tp
-from qiskit import Aer, assemble, QuantumCircuit, QuantumRegister, ClassicalRegister, IBMQ, transpile, execute
+from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister
 from qiskit.ignis.verification.tomography import state_tomography_circuits, StateTomographyFitter
 from qiskit.quantum_info import state_fidelity
 
