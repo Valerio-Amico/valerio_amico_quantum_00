@@ -1,0 +1,75 @@
+1)
+4copy_check, steps = 42, time = pi, date = 18-03-2022
+
+evo_ID = "6233ae39d97bff04d66929e9"
+cal_ID = "6233ae3ba2f72dff43da994f"
+
+fid = 99.2 %
+
+2)
+3copy_check, steps=[5,6,8,10,12,16,20,30,40,50,69,99], reps=2, time = pi, date = 10-03-2022
+
+jobs=backend.retrieve_jobs(limit=30, start_datetime= "2022-03-9", end_datetime="2022-03-11")
+
+fid > 99.0%
+
+3) 
+4copy_check, time_range=np.linspace(0.01,np.pi,20), reps=8, steps=42
+
+fid = 99.4% (l'ultimo punto, corrispondente a t=pi)
+
+4)
+check=["4copy_check", [0,2,4,6]], reps=2, steps=88, time_range=np.linspace(0.01,np.pi,15)
+
+5) nuova mitigazione
+shots=32000, precision=50, steps=99, check=["4copy_check", [0,2,4,6]], evo_type="column_evolution", time=pi
+
+id_tomo = 624dac77f65d782bb338fafb
+id_new_cal = 624dac7ca5d4eed65177c55c
+id_qiskit_cal = 624dac7d4b515260bf7c62e7
+
+6)
+shots=32000, precision=50, steps=99, check=["4copy_check", [0,2,4,6]], evo_type="complete_evolution", time=np.pi
+
+id_tomo = 624dbafbf65d78c03a38fbb6
+id_cal_identity = 624dbafe182d0267144c22e8
+id_cal_itself = 624dbb01cfe45c43e6e59cbd
+id_cal_qiskit = 624dbb03aacb9beb455f46e3
+
+7)
+n_steps=99, time=np.pi, initial_state="110", reps = 1, shots = 32000, precision=50, check=["4copy_check", [0,2,4,6]]
+evo_type="column_evolution"
+
+id_tomo = 624dc20c4b515250027c63f4
+id_cal_identity = 624dc210f65d785beb38fbea
+id_cal_itself = 624dc213aacb9b2d545f473e
+id_cal_qiskit = 624dc215182d0200d84c2334
+
+8)
+n_steps=99, time=np.pi, initial_state="110", shots = 32000, precision=50, check=["4copy_check", [0,2,4,6]]
+evo_type="column_evolution"
+
+id_tomo = 624f2baca5d4ee4a7577d164
+id_cal_identity = 624f2baf182d024fe84c2e34
+id_cal_itself = 624f2bb1f65d78a4ff3906f6
+id_cal_qiskit = 624f2bb3aacb9bf28e5f51ca
+
+9)
+shots=32000, precision=50, steps=99, check=["4copy_check", [0,2,4,6]], time=np.pi
+evo_type="complete_evolution" 
+
+id_tomo = 624f2d62a5d4ee96e077d190
+id_cal_identity = 624f2d65d720332a5a67dca5
+id_cal_itself = 624f2d684b515263ee7c6f6a
+id_cal_qiskit = 624f2d6ad720331df067dca6
+
+10)
+n_steps=51
+time=np.pi
+evo_type="column_evolution" 
+
+11)
+n_steps=99
+time=np.pi
+evo_type="column_evolution" 
+
