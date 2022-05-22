@@ -1,7 +1,11 @@
-# Proposed solution to the Open-Science Prize bla bla bla
+# Proposed solution to the Open-Science Prize
 
-This repository is the proposed solution to *link*. The main explanation is given in *file*.ipynb.
+This repository is the proposed solution to https://research.ibm.com/blog/quantum-open-science-prize. The main explanation is given in 'main_submission.ipynb'.
 
-A PDF of supplementary explanations is also present, but at the moment contains outdated techniques.
+'time_evolution.ipynb' is a supplemetary notebook which implemets the time evolution of the solution.
 
-Furthermore, the validity of the followed approach at every time is shown in *file_pdf*.pdf, 
+In 'time_evolution_plots.pdf' we show the plots of the time evolution from 0 to pi and the differences of the two proposed techniques. 
+
+In ' ' is 
+
+In 'lib' folder there is a 'utilities.py' file containing some functions colled from the code.

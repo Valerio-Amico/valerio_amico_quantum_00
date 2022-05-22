@@ -187,9 +187,11 @@ def get_calibration_circuits(qc, method="NIC", eigenvector=None):
 
     return calib_circuits
 
-def fidelity_count(result, qcs, target_state):
+def _fidelity_count(result, qcs, target_state):
     '''
     given job result, tomography circuits and targhet state it returns the fidelity score.
+    this function is a copy of 'fidelity_count' defined in the main commit. 
+    It's used only in the time evolution notebook.
     '''
     tomo_ising = StateTomographyFitter(result, qcs)
     rho_fit_ising = tomo_ising.fit(method="lstsq")
@@ -303,7 +305,7 @@ def fast_tomography_calibration_MeasFitters(calibration_results, method="NIC", U
         # compute the tomography unitary basis matrix and the inverse.
         basis.remove_final_measurements()
         base_matrix_amplitudes = Operator(basis)
-        base_matrix_amplitudes_inverse = np.linalg.inv(base_matrix_amplitudes)
+        base_matrix_amplitudes_inverse = base_matrix_amplitudes.transpose().conjugate()
         # compute the probability matrix of the base changing.
         base_matrix = np.abs(base_matrix_amplitudes)**2
         base_matrix_inverse = np.abs(base_matrix_amplitudes_inverse)**2
