@@ -63,8 +63,6 @@ def get_calibration_circuits(qc, method="NIC", eigenvector=None):
             # than we append the circuit
             qc_cal.append(qc, qr_cal)
         
-        elif method == "LIC":
-        
         elif method == "qiskit":
             for qubit in range(N_qubits):
                 if state[::-1][qubit] == "1":
@@ -223,3 +221,206 @@ def bin_list(N_qubit):
     for i in range(2**N_qubit):
         r.append(DecimalToBinary(i,N_qubit))
     return r
+
+##### staff for the IBM challenge hamiltonian decomposition
+
+
+# Constant objects used in the calculations
+X = np.array([[0,1],[1,0]]) 
+Y = np.array([[0,-1j],[1j,0]])
+Z = np.array([[1,0],[0,-1]])
+Id = np.eye(2)
+
+# Defining the hamiltonian divided in: 
+#       - H1: first two qubits interactions.
+#       - H2: second two qubits interactions.
+H1 = np.kron(X, np.kron(X,Id)) + np.kron(Y, np.kron(Y,Id)) + np.kron(Z, np.kron(Z,Id)) 
+H2 = np.kron(Id, np.kron(X,X)) + np.kron(Id, np.kron(Y,Y)) + np.kron(Id, np.kron(Z,Z)) 
+
+# Loads the Jakarta-adapted Toffoli gate
+dirname = os.path.dirname(__file__)
+Toffoli_gate = QuantumCircuit.from_qasm_file(os.path.join(dirname, "Toffoli.qasm"))
+Toffoli_gate.name = "optimized\ntoffoli"
+# B is the permutation matrix used in the HSD 
+B = np.array(
+   [[0,0,0,0,1,0,0,0],
+    [0,0,1,0,0,0,0,0],
+    [0,1,0,0,0,0,0,0],
+    [1,0,0,0,0,0,0,0],
+    [0,0,0,1,0,0,0,0],
+    [0,0,0,0,0,1,0,0],
+    [0,0,0,0,0,0,1,0],
+    [0,0,0,0,0,0,0,1]]
+)
+# look up table of B
+state_permutations_B = {'110':'110', '111':'111', '101': '101', '000':'011', '011':'100', '100':'000', '001':'010', '010':'001'}
+
+# B quantum circuit: this code is reported from the final commit.
+# some functions need it.
+_B_qr=QuantumRegister(3, name="q-")
+_B_qc=QuantumCircuit(_B_qr, name="B")
+_B_qc.x(_B_qr[2])
+_B_qc.cx(_B_qr[1],_B_qr[0])
+_B_qc.cx(_B_qr[2],_B_qr[1])
+_B_qc.cx(_B_qr[1],_B_qr[0])
+_B_qc.x([_B_qr[0],_B_qr[1],_B_qr[2]])
+_B_qc.append(Toffoli_gate,[_B_qr[0],_B_qr[1],_B_qr[2]])
+_B_qc.x([_B_qr[0],_B_qr[1]])
+
+def trotter_step_matrix(time, n_steps):
+    """Computes numerically the trotter step"""
+    return expm(-time/n_steps*H1*1j).dot(expm(-time/n_steps*H2*1j))
+
+def trotterized_matrix(time, n_steps):
+    """Computes the trotter_step**n_steps"""
+    return np.linalg.matrix_power(trotter_step_matrix(time, n_steps), n_steps)
+
+def get_gates_parameters(U, initial_state={"110": 1.0}):
+    """Finds the parameters of the gates based on the system of equations
+    defined by the numerical evolution matrix, for the SSD.
+    Since the evolution is trivial in the magnetization 0 and 3 subspaces
+    the procedure is done only for mag==1 and mag==2
+    Note: 
+        we suggest the implementation for a generic state 
+        but the only one tested is the inital_state of the challenge '110'.
+    Args
+    ----
+        U : np.ndarray
+            the trotterized evolution matrix
+        initial_state : dict
+            the initial state to be evolved in format {"state": amplitude}
+    Returns
+    ----
+        theta_1, theta_2, phi_1, phi_2, omega_1, omega_2 (tuple(float)): 
+    
+    """
+    if initial_state != {"110": 1.0}:
+        warnings.warn("Any initial_state different from '110' has not been sufficiently tested.")
+    # Builds up the array associated to the initial state
+    state = np.zeros(8, dtype=np.complex)
+
+    # Creates the 8-dimensional vector associated to the state
+    # checking that it is in a magnetization eigenspace
+    magnetization = sum([int(_) for _ in list(initial_state.keys())[0]])
+    for base_vector in initial_state:
+        if sum([int(_) for _ in base_vector]) != magnetization:
+            raise ValueError("States must have the same magnetization!")
+        state[int(base_vector, 2)] = initial_state[base_vector]
+
+    # Sends an (a, b, c) state of fixed magnetization
+    # into a (alpha, beta, gamma) state of the same mag
+    state = U.dot(state)
+    # print(f"get_gates_parameters() - U*initial_state is \n{state}")
+
+    # Now takes the relevant components and solves the associated system of eqs.
+    if magnetization == 2:
+
+        subspace_coords = np.array([3, 5, 6])
+        alpha, beta, gamma = state[subspace_coords]
+
+        theta_1 = 0.5 * (np.angle(alpha) + np.angle(gamma))
+        theta_2 = 0
+
+        phi_1 = 0.5 * (np.angle(gamma) - np.angle(beta) - np.pi)
+        phi_2 = 0.5 * (np.angle(beta) - np.angle(alpha) + np.pi)
+
+        omega_1 = np.arccos(np.abs(gamma))
+        omega_2 = np.arccos(np.abs(beta) / np.sin(omega_1))
+
+    elif magnetization == 1:
+        raise NotImplementedError("The magnetization==1 case has not been sufficiently tested")
+        subspace_coords = np.array([3, 5, 6])
+        alpha, beta, gamma = state[subspace_coords]
+
+        theta_1 = 0.5 * (-np.angle(alpha) - np.angle(gamma))
+        theta_2 = 0
+
+        phi_1 = 0.5 * (np.angle(beta) - np.angle(gamma))
+        phi_2 = 0.5 * (np.angle(alpha) - np.angle(beta)) - phi_1
+
+        omega_1 = np.arcos(np.abs(gamma))
+        omega_2 = np.arccos(np.abs(beta) / np.sin(omega_1))
+
+    return theta_1, theta_2, phi_1, phi_2, omega_1, omega_2
+
+def get_evolution_circuit(time, n_steps, method="HSD", initial_state={"110": 1}):
+    '''
+    Returns the evolution circuit with the associated QuantumRegister.
+    Args:
+    ----
+        time (float): the evolution time.
+        n_steps (int): number of trotter steps.
+        method (string): decomposition method, can be "HSD" or "SSD".
+        initial_state (dict): {"state": amplitude, ...}. Is the initiat state, used only for the SSD
+                              to compute the circuit parameters.
+                              Warning: functions are not optimized for any initial state,
+                              everythink works with "110", can be problems with other initial states.
+    Returns
+    ----
+        QuantumCircuit, QuantumRegister : circuit and quantum register of the evolution circuit.
+        
+    '''
+    if method == "HSD":
+        return get_HSD_circuit(time, n_steps)
+    elif method == "SSD":
+        return get_SSD_circuit(time, n_steps, initial_state=initial_state)
+    raise ValueError("The decomposition method 'method' must be chosen between 'HSD' or 'SSD'.")
+
+def get_HSD_circuit(time, n_steps):
+    '''
+    returns the evolution circuit with the Hilbert Space Decomposition, prepared in the state |000>
+    '''
+    T = trotterized_matrix(time, n_steps)
+    T_b = np.linalg.multi_dot([B, T, B.transpose() ])
+
+    D = T_b[0:4, 0:4]
+    # Transpile the D operator and build the evolution circuit
+    D_qc = QuantumCircuit(2, name="D")
+    D_qc.unitary(D,[0,1])    
+    D_qc = transpile(D_qc, basis_gates=['cx','x','sx','rz']) # Jackarta basis gates
+
+    qr_HSD = QuantumRegister(3, name="q_")
+    qc_HSD = QuantumCircuit(qr_HSD, name="D")
+    # here the state isn't preparated. 
+    qc_HSD.append(D_qc, [qr_HSD[0], qr_HSD[1]])
+    qc_HSD.append(_B_qc.inverse(), qr_HSD)
+
+    return qc_HSD, qr_HSD
+
+def get_SSD_circuit(time, n_steps, initial_state={"110": 1}):
+    '''
+    returns the evolution circuit obtained with the Single State Decomposition.
+    '''
+    # getting the parameters for the gates M1 and M2, solving the equations described in 1.1).
+    theta_1, theta_2, phi_1, phi_2, omega_1, omega_2 = get_gates_parameters(trotterized_matrix(time, n_steps), initial_state=initial_state)
+    # build M1 and M2
+    M1_qc = get_M(theta_1, phi_1, omega_1)
+    M2_qc = get_M(theta_2, phi_2, omega_2)
+    # define the circuit of U
+    qr_U = QuantumRegister(3 ,name="q_")
+    qc_U = QuantumCircuit(qr_U, name="U")
+    # append the gates
+    qc_U.append(M1_qc, [qr_U[0], qr_U[1]])
+    qc_U.append(M2_qc, [qr_U[1], qr_U[2]])
+    # transpile and draw the circuit
+    qc_U=transpile(qc_U, basis_gates=["cx","rz","x","sx"])
+    return qc_U, qr_U
+
+def get_M(theta, phi, omega, name="M"): # defining the M matrix
+    '''
+    returns the fixed 2-qubits magnetization gate. 
+    This is a copy of the function in the notebook, 
+    some functions need it here.
+    '''
+    qr=QuantumRegister(2, name="q_")
+    M_qc=QuantumCircuit(qr, name=name)
+
+    M_qc.rz(2*theta,qr[1])
+    M_qc.h(qr[0])
+    M_qc.cx(qr[0],qr[1])
+    M_qc.ry(omega,qr)
+    M_qc.cx(qr[0],qr[1])
+    M_qc.h(qr[0])
+    M_qc.rz(2*phi,qr[1])
+
+    return M_qc
