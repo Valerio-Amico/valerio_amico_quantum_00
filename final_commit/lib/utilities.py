@@ -310,7 +310,8 @@ def fast_tomography_calibration_MeasFitters(calibration_results, method="NIC", U
         base_matrix = np.abs(base_matrix_amplitudes)**2
         base_matrix_inverse = np.abs(base_matrix_amplitudes_inverse)**2
         # compute the calibration matrix in the new basis.
-        C_base = np.linalg.multi_dot([base_matrix, C,  base_matrix_inverse])
+        # C_base = np.linalg.multi_dot([base_matrix, C,  base_matrix_inverse])
+        C_base = np.abs(np.linalg.multi_dot([base_matrix_amplitudes, C,  base_matrix_amplitudes_inverse]))**2
         # define a new object CompleteMeasFitter.
         meas_fitter_aus = copy.deepcopy(meas_fitter)
         meas_fitter_aus._tens_fitt.cal_matrices[0]=C_base

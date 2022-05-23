@@ -75,7 +75,7 @@ def get_calibration_circuits(qc, method="NIC", eigenvector=None):
 
     return calib_circuits, state_labels
 
-def get_tensorized_calibration_circuits(qc, method="NIC", eigenvector=None):
+def get_tensored_calibration_circuits(qc, method="NIC", eigenvector=None):
     '''
     Returns a list of calibration circuits for all the methods: T-CIC, T-NIC and T-qiskit calibration matrix.
 
@@ -94,25 +94,26 @@ def get_tensorized_calibration_circuits(qc, method="NIC", eigenvector=None):
 
     calib_circuits = []
     state_labels = []
+    N_qubits = len(qc.qubits)
 
-    for Qubit in range(len(qc.qubits)):
+    for Qubit in range(N_qubits):
         for label in ['0','1']:
             state = ['0', '0', '0']
             state[Qubit] = label
             state = "".join(state)[::-1]
             state_labels.append(state)
             cr_cal = ClassicalRegister(1, name = "c")
-            qr_cal = QuantumRegister(3, name = "q_")
+            qr_cal = QuantumRegister(N_qubits, name = "q_")
             qc_cal = QuantumCircuit(qr_cal, cr_cal, name=f"mcalcal_{state}")
             if method == "NIC": 
                 # first we prepare the eigenstate (if method == "NIC").
-                for qubit in range(3):
+                for qubit in range(N_qubits):
                     if eigenvector[::-1][qubit] == "1":
                         qc_cal.x(qr_cal[qubit])
                 # then we append the circuit
                 qc_cal.append(qc, qr_cal)
                 # than we append the gate that bring the eigenstate to the computational basis.
-                for qubit in range(3):
+                for qubit in range(N_qubits):
                     if eigenvector[::-1][qubit] == "1" and state[::-1][qubit] == "0":
                         qc_cal.x(qr_cal[qubit])
                     elif eigenvector[::-1][qubit] == "0" and state[::-1][qubit] == "1":
@@ -120,7 +121,7 @@ def get_tensorized_calibration_circuits(qc, method="NIC", eigenvector=None):
             # CIC case: first we prepare the initial state than we append the evolution.
             if method == "CIC": 
                 # first we prepare the state.
-                for qubit in range(3):
+                for qubit in range(N_qubits):
                     if state[::-1][qubit] == "1":
                         qc_cal.x(qr_cal[qubit])
                 # than we append the circuit
